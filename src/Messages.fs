@@ -2,11 +2,9 @@ module Messages
 
 open Enumerations
 
-type FieldName =
-    | FieldName of string
+type FieldName = FieldName of string
     
-type FieldNumber =
-    | FieldNumber of uint
+type FieldNumber = FieldNumber of uint
     
 type FieldNumberInterval = {
     min: FieldNumber
@@ -39,13 +37,14 @@ type ScalarType =
     | Bytes
     
 type FieldType =
-    | ScalarType
+    | ScalarType of ScalarType
+    | Reference of string
     | Enumeration of Enumeration
     | Message of Message
 and Field = {
     name: FieldName
     typename: FieldType
-    number: uint
+    number: FieldNumber
 }
 and FieldItem =
     | Field of Field

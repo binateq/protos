@@ -1,10 +1,8 @@
 module Enumerations
 
-type EnumerationName =
-    | EnumerationName of string
+type EnumerationName = EnumerationName of string
 
-type EnumerationValue =
-    | EnumerationValue of int
+type EnumerationValue = EnumerationValue of int
     
 type EnumerationValueInterval = {
     min: EnumerationValue
