@@ -19,40 +19,23 @@ type FieldReserve =
     | FieldNumbers of FieldReserveItem seq
     | FieldNames of FieldName seq
 
-type ScalarType =
-    | Double
-    | Float
-    | Int32
-    | Int64
-    | UInt32
-    | UInt64
-    | SInt32
-    | SInt64
-    | Fixed32
-    | Fixed64
-    | SFixed32
-    | SFixed64
-    | Bool
-    | String
-    | Bytes
-    
-type FieldType =
-    | ScalarType of ScalarType
-    | Reference of string
-    | Enumeration of Enumeration
-    | Message of Message
-and Field = {
-    name: FieldName
-    typename: FieldType
-    number: FieldNumber
-}
-and FieldItem =
-    | Field of Field
-    | FieldReserve of FieldReserve
-and Message = {
-    name: string
-    items: FieldItem seq
-}
+//type FieldType =
+//    | ScalarType of ScalarType
+//    | Reference of string
+//    | Enumeration of Enumeration
+//    | Message of Message
+//and Field = {
+//    name: FieldName
+//    typename: FieldType
+//    number: FieldNumber
+//}
+//and FieldItem =
+//    | Field of Field
+//    | FieldReserve of FieldReserve
+//and Message = {
+//    name: string
+//    items: FieldItem seq
+//}
 
 /// <summary>
 /// Checks if field's number is valid.
