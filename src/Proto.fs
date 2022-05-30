@@ -23,7 +23,7 @@ type Option = {
     value: Constant
 }
 
-type ScalarType =
+type FieldType =
     | Double
     | Float
     | Int32
@@ -39,4 +39,16 @@ type ScalarType =
     | Bool
     | String
     | Bytes
+    | Reference of string
     
+type FieldName = FieldName of string
+
+type FieldNumber = FieldNumber of uint32
+    
+type Field = {
+    repeated: bool
+    name: FieldName
+    fieldType: FieldType
+    number: FieldNumber
+    options: Option list option
+}
