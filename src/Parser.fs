@@ -135,3 +135,12 @@ do implementation.Value <- pipe2 (skipString "message" >>. spaces1 >>. identifie
                                           (many messageItem))
                                  (fun name items -> { MessageDefinition.name = name
                                                       items = items })
+
+let protoItem = (stringReturn ";" ProtoEmptyItem)
+            <|> (import |>> ProtoImport)
+            <|> (package |>> ProtoPackage)
+            <|> (option |>> ProtoOption)
+            <|> (enumDefinition |>> ProtoEnum)
+            <|> (messageDefinition |>> ProtoMessage)
+
+let proto = spaces >>. syntax >>. (many protoItem)

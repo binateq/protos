@@ -86,3 +86,11 @@ and MessageDefinition = {
     name: MessageName
     items: MessageItem list
 }
+
+type ProtoItem =
+    | ProtoEmptyItem
+    | ProtoImport of Import
+    | ProtoPackage of Package
+    | ProtoOption of Option
+    | ProtoEnum of EnumDefinition
+    | ProtoMessage of MessageDefinition

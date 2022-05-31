@@ -280,3 +280,160 @@ let ``"message User { string login = 1; int64 uid = 2;}" is MessageDefinition`` 
                                               number = MessageFieldNumber 2u
                                               options = None } ] }
     Assert.ParseEqual(expected, messageDefinition, "message User { string login = 1; int64 uid = 2;}")
+
+[<Fact>]
+[<Trait("Category", "Integration")>]
+let ``Proto file #1`` () =
+    let example = """
+syntax = "proto3";
+
+package crm.proto.space.api.mail;
+
+option csharp_namespace = "Api.Logic.Forms.VirtualMail.Contracts";
+
+import "google/protobuf/timestamp.proto";
+
+message MailRequest {
+    User user = 1;
+    Mail mail = 2;
+}
+
+message User {
+    string login = 1;
+    int64 uid = 2;
+}
+
+message Mail {
+    MailAddress from = 1;
+    repeated MailAddress to = 2;
+    repeated MailAddress cc = 3;
+    string subject = 4;
+    string text = 5;
+    bool is_text_html = 6;
+    google.protobuf.Timestamp time = 7;
+    repeated MailHeader headers = 8;
+    repeated File files = 9;
+}
+
+message MailAddress {
+    string email = 1;
+    string display_name = 2;
+}
+
+message MailHeader {
+    string name = 1;
+    string value = 2;
+}
+
+message File {
+    string name = 1;
+    string url_path = 2;
+}
+"""
+    let expected = [ ProtoPackage (Package "crm.proto.space.api.mail")
+                     ProtoOption { name = SimpleName "csharp_namespace"
+                                   value = Constant.String "Api.Logic.Forms.VirtualMail.Contracts" }
+                     ProtoImport (Import "google/protobuf/timestamp.proto")
+                     ProtoMessage { name = MessageName "MailRequest"
+                                    items = [ MessageField { repeated = false
+                                                             name = MessageFieldName "user"
+                                                             fieldType = Reference "User" 
+                                                             number = MessageFieldNumber 1u
+                                                             options = None }
+                                              MessageField { repeated = false
+                                                             name = MessageFieldName "mail"
+                                                             fieldType = Reference "Mail"
+                                                             number = MessageFieldNumber 2u
+                                                             options = None } ] }
+                     ProtoMessage { name = MessageName "User"
+                                    items = [ MessageField { repeated = false
+                                                             name = MessageFieldName "login"
+                                                             fieldType = String 
+                                                             number = MessageFieldNumber 1u
+                                                             options = None }
+                                              MessageField { repeated = false
+                                                             name = MessageFieldName "uid"
+                                                             fieldType = Int64
+                                                             number = MessageFieldNumber 2u
+                                                             options = None } ] }
+                     ProtoMessage { name = MessageName "Mail"
+                                    items = [ MessageField { repeated = false
+                                                             name = MessageFieldName "from"
+                                                             fieldType = Reference "MailAddress"
+                                                             number = MessageFieldNumber 1u
+                                                             options = None }
+                                              MessageField { repeated = true
+                                                             name = MessageFieldName "to"
+                                                             fieldType = Reference "MailAddress"
+                                                             number = MessageFieldNumber 2u
+                                                             options = None }
+                                              MessageField { repeated = true
+                                                             name = MessageFieldName "cc"
+                                                             fieldType = Reference "MailAddress"
+                                                             number = MessageFieldNumber 3u
+                                                             options = None }
+                                              MessageField { repeated = false
+                                                             name = MessageFieldName "subject"
+                                                             fieldType = String
+                                                             number = MessageFieldNumber 4u
+                                                             options = None }
+                                              MessageField { repeated = false
+                                                             name = MessageFieldName "text"
+                                                             fieldType = String
+                                                             number = MessageFieldNumber 5u
+                                                             options = None }
+                                              MessageField { repeated = false
+                                                             name = MessageFieldName "is_text_html"
+                                                             fieldType = Bool
+                                                             number = MessageFieldNumber 6u
+                                                             options = None }
+                                              MessageField { repeated = false
+                                                             name = MessageFieldName "time"
+                                                             fieldType = Reference "google.protobuf.Timestamp"
+                                                             number = MessageFieldNumber 7u
+                                                             options = None }
+                                              MessageField { repeated = true
+                                                             name = MessageFieldName "headers"
+                                                             fieldType = Reference "MailHeader"
+                                                             number = MessageFieldNumber 8u
+                                                             options = None }
+                                              MessageField { repeated = true
+                                                             name = MessageFieldName "files"
+                                                             fieldType = Reference "File"
+                                                             number = MessageFieldNumber 9u
+                                                             options = None } ] }
+                     ProtoMessage { name = MessageName "MailAddress"
+                                    items = [ MessageField { repeated = false
+                                                             name = MessageFieldName "email"
+                                                             fieldType = String 
+                                                             number = MessageFieldNumber 1u
+                                                             options = None }
+                                              MessageField { repeated = false
+                                                             name = MessageFieldName "display_name"
+                                                             fieldType = String
+                                                             number = MessageFieldNumber 2u
+                                                             options = None } ] }
+                     ProtoMessage { name = MessageName "MailHeader"
+                                    items = [ MessageField { repeated = false
+                                                             name = MessageFieldName "name"
+                                                             fieldType = String 
+                                                             number = MessageFieldNumber 1u
+                                                             options = None }
+                                              MessageField { repeated = false
+                                                             name = MessageFieldName "value"
+                                                             fieldType = String
+                                                             number = MessageFieldNumber 2u
+                                                             options = None } ] }
+                     ProtoMessage { name = MessageName "File"
+                                    items = [ MessageField { repeated = false
+                                                             name = MessageFieldName "name"
+                                                             fieldType = String 
+                                                             number = MessageFieldNumber 1u
+                                                             options = None }
+                                              MessageField { repeated = false
+                                                             name = MessageFieldName "url_path"
+                                                             fieldType = String
+                                                             number = MessageFieldNumber 2u
+                                                             options = None } ] }
+                     ]
+    Assert.ParseEqual(expected, proto, example)
