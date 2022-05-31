@@ -1,7 +1,5 @@
 module Proto
 
-open Messages
-
 type Package = Package of string
 
 type Import =
@@ -16,14 +14,37 @@ type Constant =
     | String of string
     | Bool of bool
     
-type OptionName = OptionName of string
+type OptionName =
+    | SimpleName of string
+    | ComplexName of string * string
 
 type Option = {
     name: OptionName
     value: Constant
 }
 
-type FieldType =
+type EnumFieldName = EnumFieldName of string
+type EnumValue = EnumValue of int32
+
+type EnumField = {
+    name: EnumFieldName
+    value: EnumValue
+    options: Option list option
+}
+
+type EnumItem =
+    | EnumEmptyItem
+    | EnumField of EnumField
+    | EnumOption of Option
+
+type EnumName = EnumName of string
+
+type EnumDefinition = {
+    name: EnumName
+    items: EnumItem list
+}
+
+type MessageFieldType =
     | Double
     | Float
     | Int32
@@ -41,14 +62,27 @@ type FieldType =
     | Bytes
     | Reference of string
     
-type FieldName = FieldName of string
+type MessageFieldName = MessageFieldName of string
 
-type FieldNumber = FieldNumber of uint32
+type MessageFieldNumber = MessageFieldNumber of uint32
     
-type Field = {
+type MessageField = {
     repeated: bool
-    name: FieldName
-    fieldType: FieldType
-    number: FieldNumber
+    name: MessageFieldName
+    fieldType: MessageFieldType
+    number: MessageFieldNumber
     options: Option list option
+}
+
+type MessageName = MessageName of string
+
+type MessageItem =
+    | MessageEmptyItem
+    | MessageField of MessageField
+    | MessageEnum of EnumDefinition
+    | MessageMessage of MessageDefinition
+    | MessageOption of Option
+and MessageDefinition = {
+    name: MessageName
+    items: MessageItem list
 }

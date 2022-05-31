@@ -6,9 +6,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Enumerations.fs" />
-        <Compile Include="Messages.fs" />
         <Compile Include="Proto.fs" />
+        <Compile Include="Validators.fs" />
         <Compile Include="Parser.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
