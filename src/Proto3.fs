@@ -1,4 +1,4 @@
-module Proto
+module Proto3
 
 type Package = Package of string
 

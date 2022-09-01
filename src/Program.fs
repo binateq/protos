@@ -1,4 +1,4 @@
 ﻿module Program
 
-open Proto
-open Parser
+open Proto3
+open Proto3Parser

@@ -1,8 +1,8 @@
-module ParserTests
+module Proto3ParserTests
 
 open Xunit
-open Parser
-open Proto
+open Proto3Parser
+open Proto3
 
 module Assert =
     open FParsec

@@ -1,7 +1,7 @@
-module Parser
+module Proto3Parser
 
 open FParsec
-open Proto
+open Proto3
 
 // https://developers.google.com/protocol-buffers/docs/reference/proto3-spec
 let identifier : Parser<string, unit> =

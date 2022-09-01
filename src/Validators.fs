@@ -1,6 +1,6 @@
 module Validators
 
-open Proto
+open Proto3
 
 /// <summary>
 /// Checks if field's number is valid.

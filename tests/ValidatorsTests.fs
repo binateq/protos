@@ -1,7 +1,7 @@
 module ValidatorsTests
 
 open Xunit
-open Proto
+open Proto3
 open Validators
 
 [<Fact>]
