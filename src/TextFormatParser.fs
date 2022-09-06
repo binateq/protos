@@ -1,5 +1,6 @@
 module TextFormatParser
 
+open System
 open FParsec
 open TextFormat
 
@@ -19,6 +20,13 @@ let exp : Parser<string, unit> = (pstringCI "e+" <|> pstringCI "e-" <|> pstringC
 
 let floatLit : Parser<string, unit> = (pstring "." .>>. many1Satisfy isDigit .>>. opt exp
                                        |>> (fun ((dot, digits), exp) -> dot + digits + Option.defaultValue "" exp))
-                                  <|> (decLit .>>. exp |>> (fun (digits, exp) -> digits + exp))
-                                  <|> (decLit .>>. pstring "." .>>. (manySatisfy isDigit) .>>. opt exp
-                                       |>> (fun (((d1, dot), d2), exp) -> d1 + dot + d2 + Option.defaultValue "" exp))
+                                  <|> (attempt (decLit .>>. pstring "." .>>. (manySatisfy isDigit) .>>. opt exp
+                                       |>> (fun (((d1, dot), d2), exp) -> d1 + dot + d2 + Option.defaultValue "" exp)))
+                                  <|> (decLit .>>. exp
+                                       |>> (fun (digits, exp) -> digits + exp))
+
+let decInt : Parser<int, unit> = decLit |>> Int32.Parse
+let octInt : Parser<int, unit> = pstring "0" >>. many1Satisfy isOctal |>> (fun s -> Convert.ToInt32(s, 8))
+let hexInt : Parser<int, unit> = pstringCI "0x" >>. many1Satisfy isHex |>> (fun s -> Convert.ToInt32(s, 16))
+let decFloat : Parser<float, unit> = (attempt (decLit .>> pstringCI "f" |>> Double.Parse))
+                                 <|> (floatLit .>>? pstringCI "f" |>> Double.Parse)

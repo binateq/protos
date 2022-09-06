@@ -115,3 +115,27 @@ let ``123.456e78 is floatLit`` () =
 [<Fact>]
 let ``123e78 is floatLit`` () =
     Assert.Parse("123e78", floatLit)
+    
+[<Fact>]
+let ``123 is int 123`` () =
+    Assert.ParseEqual("123", decInt, 123)
+    
+[<Fact>]
+let ``0123 is int 83`` () =
+    Assert.ParseEqual("0123", octInt, 83)
+    
+[<Fact>]
+let ``0x123 is int 291`` () =
+    Assert.ParseEqual("0x123", hexInt, 291)
+
+[<Fact>]
+let ``123.456 is float 123.456`` () =
+    Assert.ParseEqual("123.456", decFloat, 123.456)
+
+[<Fact>]
+let ``123.456F is float 123.456`` () =
+    Assert.ParseEqual("123.456F", decFloat, 123.456)
+    
+[<Fact>]
+let ``123F is float 123`` () =
+    Assert.ParseEqual("123F", decFloat, 123.0)
