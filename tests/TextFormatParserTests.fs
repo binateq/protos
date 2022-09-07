@@ -1,5 +1,6 @@
 module TextFormatParserTests
 
+open FParsec
 open Xunit
 open TextFormatParser
 open TextFormat
@@ -23,16 +24,29 @@ module Assert =
         | Failure (message, _, _) -> Assert.True(true, message)
 
 [<Fact>]
-let ``#123 is comment`` () =
-    Assert.Parse("#123", comment)
+let ``123 is decimals`` () =
+    Assert.ParseEqual("123", decimals0, "123")
+    Assert.ParseEqual("123", decimals1, "123")
     
 [<Fact>]
-let ``# 123 is comment`` () =
-    Assert.Parse("# 123", comment)
+let ``abc is decimals with minimum zero repetitions`` () =
+    Assert.Parse("abc", decimals0)
+    
+[<Fact>]
+let ``abc is not decimals with minimum one repetitions`` () =
+    Assert.NotParse("abc", decimals1)
 
 [<Fact>]
-let ``# 123\n is comment`` () =
-    Assert.Parse("# 123\n", comment)
+let ``#abc is comment`` () =
+    Assert.Parse("#abc", comment)
+    
+[<Fact>]
+let ``# abc is comment`` () =
+    Assert.Parse("# abc", comment)
+
+[<Fact>]
+let ``# abc\n is comment`` () =
+    Assert.Parse("# abc\n", comment)
     
 [<Fact>]
 let ``#\n is comment`` () =
@@ -71,6 +85,14 @@ let ``0123 is not decimal literal`` () =
     Assert.NotParse("0123", decLit)
     
 [<Fact>]
+let ``abc is optional abc`` () =
+    Assert.ParseEqual("abc", optStr (pstring "abc"), "abc")
+
+[<Fact>]
+let ``def is optional abc`` () =
+    Assert.ParseEqual("def", optStr (pstring "abc"), "")
+
+[<Fact>]
 let ``e+100 is exp`` () =
     Assert.ParseEqual("e+100", exp, "e+100")
         
@@ -87,6 +109,10 @@ let ``e100 is exp`` () =
 [<Fact>]
 let ``e +100 is not exp`` () =
     Assert.NotParse("e +100", exp)
+    
+[<Fact>]
+let ``abc is optional exp`` () =
+    Assert.ParseEqual("abc", optStr exp, "")
 
 [<Fact>]
 let ``.123 is floatLit`` () =
