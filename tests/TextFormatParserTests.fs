@@ -165,3 +165,19 @@ let ``123.456F is float 123.456`` () =
 [<Fact>]
 let ``123F is float 123`` () =
     Assert.ParseEqual("123F", decFloat, 123.0)
+    
+[<Fact>]
+let ``"abc" is string literal`` () =
+    Assert.ParseEqual("\"abc\"", stringLit, "abc")
+    
+[<Fact>]
+let ``'abc' is string literal`` () =
+    Assert.ParseEqual("'abc'", stringLit, "abc")
+
+[<Fact>]
+let ``'abc'"def" is string value`` () =
+    Assert.ParseEqual("'abc'\"def\"", stringValue, "abcdef")
+    
+[<Fact>]
+let ``'abc' 'def' is string value`` () =
+    Assert.ParseEqual("'abc' 'def'", stringValue, "abcdef")

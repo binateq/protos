@@ -2,7 +2,6 @@ module TextFormatParser
 
 open System
 open FParsec
-open TextFormat
 
 // https://developers.google.com/protocol-buffers/docs/text-format-spec
 
@@ -35,3 +34,12 @@ let octInt : Parser<int, unit> = pstring "0" >>. many1Satisfy isOctal |>> (fun s
 let hexInt : Parser<int, unit> = pstringCI "0x" >>. many1Satisfy isHex |>> (fun s -> Convert.ToInt32(s, 16))
 let decFloat : Parser<float, unit> = (attempt (decLit .>> pstringCI "f" |>> Double.Parse))
                                  <|> (floatLit .>> (opt (pstringCI "f")) |>> (fun s -> Double.Parse(s, System.Globalization.CultureInfo.InvariantCulture)))
+
+let stringLit : Parser<string, unit> =
+    let doubleQuotedChar = satisfy (fun c -> c <> '\\' && c <> '"')
+    let singleQuotedChar = satisfy (fun c -> c <> '\\' && c <> '\'')
+    
+    (between (skipString "\"") (skipString "\"") (manyChars doubleQuotedChar))
+<|> (between (skipString "\'") (skipString "\'") (manyChars singleQuotedChar))
+
+let stringValue = many1 (spaces >>. stringLit) |>> (fun ss -> ss |> Seq.ofList |> String.concat "")
