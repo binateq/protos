@@ -226,7 +226,7 @@ let ``"RUNNING = 2 [(custom_option) = "hello world"];" is EnumField`` () =
     Assert.ParseEqual(expected, enumField, "RUNNING = 2 [(custom_option) = \"hello world\"];")
 
 let ``"enum Foo { option alias = 'Bar'; UNKNOWN = 0; KNOWN = 1; }" is EnumDefinition`` () =
-    let expected = { EnumDefinition.name = EnumName "Foo"
+    let expected = { Enum.name = EnumName "Foo"
                      items = [ EnumOption { name = SimpleName "alias"; value = Constant.String "Bar" }
                                EnumField { name = EnumFieldName "UNKNOWN"; value = EnumValue 0; options = None }
                                EnumField { name = EnumFieldName "KNOWN"; value = EnumValue 1; options = None } ] }
@@ -253,7 +253,7 @@ let ``"repeated MailAddress cc = 3;" is MessageField`` () =
 
 [<Fact>]
 let ``"message MailRequest { User user = 1; Mail mail = 2; }" is MessageDefinition`` () =
-    let expected = { MessageDefinition.name = MessageName "MailRequest"
+    let expected = { Message.name = MessageName "MailRequest"
                      items = [ MessageField { repeated = false
                                               name = MessageFieldName "user"
                                               fieldType = Reference "User" 
@@ -268,7 +268,7 @@ let ``"message MailRequest { User user = 1; Mail mail = 2; }" is MessageDefiniti
 
 [<Fact>]
 let ``"message User { string login = 1; int64 uid = 2;}" is MessageDefinition`` () =
-    let expected = { MessageDefinition.name = MessageName "User"
+    let expected = { Message.name = MessageName "User"
                      items = [ MessageField { repeated = false
                                               name = MessageFieldName "login"
                                               fieldType = String 

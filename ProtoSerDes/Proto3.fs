@@ -1,50 +1,62 @@
 module Proto3
 
-type Package = Package of string
+type ProtoItem =
+    | ProtoImport of Import
+    | ProtoPackage of Package
+    | ProtoOption of Option
+    | ProtoMessage of Message
+    | ProtoEnum of Enum
+    // TODO: ProtoService
+    | ProtoEmptyStatement
+    
+and Package = Package of string
 
-type Import =
+and Import =
     | Import of string
     | WeakImport of string
     | PublicImport of string
     
-type Constant =
+and Option = {
+    name: OptionName
+    value: Constant
+}
+
+and OptionName =
+    | SimpleName of string
+    | ComplexName of string * string
+
+and Constant =
     | Reference of string
     | Integer of int
     | Float of float
     | String of string
     | Bool of bool
-    
-type OptionName =
-    | SimpleName of string
-    | ComplexName of string * string
 
-type Option = {
-    name: OptionName
-    value: Constant
+and Message = {
+    name: MessageName
+    items: MessageItem list
 }
 
-type EnumFieldName = EnumFieldName of string
-type EnumValue = EnumValue of int32
+and MessageName = MessageName of string
 
-type EnumField = {
-    name: EnumFieldName
-    value: EnumValue
+and MessageItem =
+    | MessageField of MessageField
+    | MessageEnum of Enum
+    | MessageMessage of Message
+    | MessageOption of Option
+    | MessageEmptyItem
+
+and MessageField = {
+    repeated: bool
+    name: MessageFieldName
+    fieldType: MessageFieldType
+    number: MessageFieldNumber
     options: Option list option
 }
 
-type EnumItem =
-    | EnumEmptyItem
-    | EnumField of EnumField
-    | EnumOption of Option
-
-type EnumName = EnumName of string
-
-type EnumDefinition = {
-    name: EnumName
-    items: EnumItem list
-}
-
-type MessageFieldType =
+and MessageFieldName = MessageFieldName of string
+    
+and MessageFieldType =
     | Double
     | Float
     | Int32
@@ -61,36 +73,27 @@ type MessageFieldType =
     | String
     | Bytes
     | Reference of string
-    
-type MessageFieldName = MessageFieldName of string
 
-type MessageFieldNumber = MessageFieldNumber of uint32
-    
-type MessageField = {
-    repeated: bool
-    name: MessageFieldName
-    fieldType: MessageFieldType
-    number: MessageFieldNumber
+and MessageFieldNumber = MessageFieldNumber of uint32
+
+and Enum = {
+    name: EnumName
+    items: EnumItem list
+}
+
+and EnumField = {
+    name: EnumFieldName
+    value: EnumValue
     options: Option list option
 }
 
-type MessageName = MessageName of string
+and EnumFieldName = EnumFieldName of string
 
-type MessageItem =
-    | MessageEmptyItem
-    | MessageField of MessageField
-    | MessageEnum of EnumDefinition
-    | MessageMessage of MessageDefinition
-    | MessageOption of Option
-and MessageDefinition = {
-    name: MessageName
-    items: MessageItem list
-}
+and EnumValue = EnumValue of int32
 
-type ProtoItem =
-    | ProtoEmptyItem
-    | ProtoImport of Import
-    | ProtoPackage of Package
-    | ProtoOption of Option
-    | ProtoEnum of EnumDefinition
-    | ProtoMessage of MessageDefinition
+and EnumItem =
+    | EnumField of EnumField
+    | EnumOption of Option
+    | EnumEmptyItem
+
+and EnumName = EnumName of string

@@ -105,7 +105,7 @@ let enumDefinition = pipe2 (skipString "enum" >>. spaces1 >>. identifier .>> spa
                            (between (skipString "{" .>> spaces)
                                     (skipString "}" .>> spaces)
                                     (many enumItem))
-                           (fun name items -> { EnumDefinition.name = name
+                           (fun name items -> { Enum.name = name
                                                 items = items })
 
 let makeMessageField repeated fieldType name number options = { MessageField.repeated = repeated
@@ -133,10 +133,10 @@ do implementation.Value <- pipe2 (skipString "message" >>. spaces1 >>. identifie
                                  (between (skipString "{" .>> spaces)
                                           (skipString "}" .>> spaces)
                                           (many messageItem))
-                                 (fun name items -> { MessageDefinition.name = name
+                                 (fun name items -> { Message.name = name
                                                       items = items })
 
-let protoItem = (stringReturn ";" ProtoEmptyItem)
+let protoItem = (stringReturn ";" ProtoEmptyStatement)
             <|> (import |>> ProtoImport)
             <|> (package |>> ProtoPackage)
             <|> (option |>> ProtoOption)
