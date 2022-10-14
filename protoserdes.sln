@@ -1,8 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "src", "src\src.fsproj", "{8F9C0CA6-3B9E-4D8B-97BE-9D1A51591FD8}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ProtoSerDes", "ProtoSerDes\ProtoSerDes.fsproj", "{8F9C0CA6-3B9E-4D8B-97BE-9D1A51591FD8}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "tests", "tests\tests.fsproj", "{BFE56327-89A0-4B51-B60E-7F7C8C233B4D}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ProtoSerDes.Tests", "ProtoSerDes.Tests\ProtoSerDes.Tests.fsproj", "{BFE56327-89A0-4B51-B60E-7F7C8C233B4D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
