@@ -1,4 +1,3 @@
-# Protocol Buffer Serialization/Deserialization Utility
+# PROTOcol buffer Converter
 
-The **protoserdes** utility can serialize data from the text to the binary format, and deserialize it back.
-
+The **protoc** utility can convert binary data to text and vice versa.
