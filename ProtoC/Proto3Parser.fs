@@ -5,142 +5,169 @@ open Proto3
 
 // https://developers.google.com/protocol-buffers/docs/reference/proto3-spec
 let identifier : Parser<string, unit> =
-    let isLetterDigitUnderscore c = isLetter c || isDigit c || c = '_'
+    let isIdentifierChar c = isLetter c || isDigit c || c = '_'
     
-    many1Satisfy2L isLetter isLetterDigitUnderscore "identifier"
+    many1Satisfy2L isLetter isIdentifierChar "identifier"
     
 let fullIdentifier = stringsSepBy1 identifier (pstring ".")
             
-let boolLit = (stringReturn "true" true) <|> (stringReturn "false" false)
+let boolLiteral = (stringReturn "true" true) <|> (stringReturn "false" false)
 
 let stringLiteral =
     let doubleQuotedChar = satisfy (fun c -> c <> '\\' && c <> '"')
     let singleQuotedChar = satisfy (fun c -> c <> '\\' && c <> '\'')
+    let doubleQuote = skipString "\""
+    let singleQuote = skipString "\'" 
     
-    (between (skipString "\"") (skipString "\"") (manyChars doubleQuotedChar))
-<|> (between (skipString "\'") (skipString "\'") (manyChars singleQuotedChar))
+    (between doubleQuote doubleQuote (manyChars doubleQuotedChar)) <|>
+    (between singleQuote singleQuote (manyChars singleQuotedChar))
 
-let syntax : Parser<unit, unit> = skipString "syntax" >>. spaces >>.
-                                  skipString "=" >>. spaces >>.
-                                  (skipString "\"proto3\"" <|> skipString "'proto3'") >>. spaces >>.
-                                  skipString ";" >>. spaces
+let syntax : Parser<unit, unit> =
+    skipString "syntax" >>. spaces >>.
+    skipString "=" >>. spaces >>.
+    (skipString "\"proto3\"" <|> skipString "'proto3'") >>. spaces >>.
+    skipString ";" >>. spaces
 
-let package = skipString "package" >>. spaces >>.
-              fullIdentifier .>> spaces .>> skipString ";" .>> spaces |>> Package
+let package =
+    skipString "package" >>. spaces >>.
+    fullIdentifier .>> spaces .>> skipString ";" .>> spaces |>> Package
               
-let import = skipString "import" >>. spaces >>.
-             ((skipString "weak" >>. spaces >>. stringLiteral |>> WeakImport)
-          <|> (skipString "public" >>. spaces >>. stringLiteral |>> PublicImport)
-          <|> (stringLiteral |>> Import)) .>> spaces .>> skipString ";" .>> spaces;
+let import =
+   let path =
+       (skipString "weak" >>. spaces >>. stringLiteral |>> WeakImport) <|>
+       (skipString "public" >>. spaces >>. stringLiteral |>> PublicImport) <|>
+       (stringLiteral |>> Import)
+       
+   skipString "import" >>. spaces >>. path .>> spaces .>> skipString ";" .>> spaces;
 
 let pnumber : Parser<Constant, unit> =
-    let numberFormat = NumberLiteralOptions.AllowMinusSign
-                   ||| NumberLiteralOptions.AllowPlusSign
-                   ||| NumberLiteralOptions.AllowFraction
-                   ||| NumberLiteralOptions.AllowExponent
+    let numberFormat =
+        NumberLiteralOptions.AllowMinusSign |||
+        NumberLiteralOptions.AllowPlusSign |||
+        NumberLiteralOptions.AllowFraction |||
+        NumberLiteralOptions.AllowExponent
+        
+    let makeNumberLiteral (literal: NumberLiteral) =
+        if literal.IsInteger
+        then Constant.Integer (int32 literal.String)
+        else Constant.Float (float literal.String)
     
-    numberLiteral numberFormat "number"
-    |>> fun nl ->
-            if nl.IsInteger then Constant.Integer (int32 nl.String)
-            else Constant.Float (float nl.String)
+    numberLiteral numberFormat "number" |>> makeNumberLiteral
 
-let constant = (stringLiteral |>> Constant.String)
-           <|> (boolLit |>> Constant.Bool)
-           <|> (fullIdentifier |>> Constant.Reference)
-           <|> pnumber
+let constant =
+    (stringLiteral |>> Constant.String) <|>
+    (boolLiteral |>> Constant.Bool) <|>
+    (fullIdentifier |>> Constant.Reference) <|>
+    pnumber
            
-let fullIdentifierInParentheses = between (skipString "(" .>> spaces)
-                                          (skipString ")" .>> spaces)
-                                          fullIdentifier
+let fullIdentifierInParentheses =
+    between (skipString "(" .>> spaces) (skipString ")" .>> spaces) fullIdentifier
                                           
 let optionalIdentifier = (skipString "." >>. fullIdentifier) <|>% ""
            
-let optionName = (fullIdentifier |>> SimpleName)
-             <|> (fullIdentifierInParentheses .>>. optionalIdentifier |>> ComplexName)
+let optionName =
+    (fullIdentifier |>> SimpleName) <|>
+    (fullIdentifierInParentheses .>>. optionalIdentifier |>> ComplexName)
 
-let optionAssignment = optionName .>> spaces .>>
-                       skipString "=" .>> spaces .>>.
-                       constant .>> spaces |>>
-                       (fun (name, value) -> { Option.name = name; value = value })
+let optionAssignment =
+    let make (name, value) = { Option.name = name; value = value } 
+    optionName .>> spaces .>> skipString "=" .>> spaces .>>. constant .>> spaces |>> make
                        
-let option = skipString "option" >>. spaces >>.
-             optionAssignment .>> spaces .>>
-             skipString ";" .>> spaces
+let option =
+    skipString "option" >>. spaces >>. optionAssignment .>> spaces .>> skipString ";" .>> spaces
     
-let fieldType : Parser<MessageFieldType, unit> = (stringReturn "double" MessageFieldType.Double)
-                                              <|> (stringReturn "float" MessageFieldType.Float)
-                                              <|> (stringReturn "int32" MessageFieldType.Int32)
-                                              <|> (stringReturn "int64" MessageFieldType.Int64)
-                                              <|> (stringReturn "uint32" MessageFieldType.UInt32)
-                                              <|> (stringReturn "uint64" MessageFieldType.UInt64)
-                                              <|> (stringReturn "sint32" MessageFieldType.SInt32)
-                                              <|> (stringReturn "sint64" MessageFieldType.SInt64)
-                                              <|> (stringReturn "fixed32" MessageFieldType.Fixed32)
-                                              <|> (stringReturn "fixed64" MessageFieldType.Fixed64)
-                                              <|> (stringReturn "sfixed32" MessageFieldType.SFixed32)
-                                              <|> (stringReturn "sfixed64" MessageFieldType.SFixed64)
-                                              <|> (stringReturn "bool" MessageFieldType.Bool)
-                                              <|> (stringReturn "string" MessageFieldType.String)
-                                              <|> (stringReturn "bytes" MessageFieldType.Bytes)
-                                              <|> (fullIdentifier |>> MessageFieldType.Reference)
+let fieldType : Parser<MessageFieldType, unit> =
+    (stringReturn "double" MessageFieldType.Double) <|>
+    (stringReturn "float" MessageFieldType.Float) <|>
+    (stringReturn "int32" MessageFieldType.Int32) <|>
+    (stringReturn "int64" MessageFieldType.Int64) <|>
+    (stringReturn "uint32" MessageFieldType.UInt32) <|>
+    (stringReturn "uint64" MessageFieldType.UInt64) <|>
+    (stringReturn "sint32" MessageFieldType.SInt32) <|>
+    (stringReturn "sint64" MessageFieldType.SInt64) <|>
+    (stringReturn "fixed32" MessageFieldType.Fixed32) <|>
+    (stringReturn "fixed64" MessageFieldType.Fixed64) <|>
+    (stringReturn "sfixed32" MessageFieldType.SFixed32) <|>
+    (stringReturn "sfixed64" MessageFieldType.SFixed64) <|>
+    (stringReturn "bool" MessageFieldType.Bool) <|>
+    (stringReturn "string" MessageFieldType.String) <|>
+    (stringReturn "bytes" MessageFieldType.Bytes) <|>
+    (fullIdentifier |>> MessageFieldType.Reference)
 
-let options = opt (between (skipString "[" .>> spaces)
-                           (skipString "]" .>> spaces)
-                           (sepBy optionAssignment (skipString "," .>> spaces)))
-
-let makeEnumField name value options = { EnumField.name = name
-                                         value = value
-                                         options = options }
+let options =
+    let openBracket = skipString "[" .>> spaces
+    let closeBracket = skipString "]" .>> spaces 
+    let assignments = sepBy optionAssignment (skipString "," .>> spaces) 
+    opt (between openBracket closeBracket assignments)
                       
-let enumField = pipe3 (identifier .>> spaces .>> skipString "=" .>> spaces |>> EnumFieldName)
-                      (pint32 .>> spaces |>> EnumValue)
-                      (options .>> spaces .>> skipString ";" .>> spaces)
-                      makeEnumField
+let enumField =
+    let make name value options =
+        { EnumField.name = name
+          value = value
+          options = options }
+    let name = identifier .>> spaces .>> skipString "=" .>> spaces |>> EnumFieldName
+    let value = pint32 .>> spaces |>> EnumValue
+    let options = options .>> spaces .>> skipString ";" .>> spaces 
+    
+    pipe3 name value options make
                       
-let enumItem = (stringReturn ";" EnumEmptyItem)
-           <|> (enumField |>> EnumField)
-           <|> (option |>> EnumOption)
+let enumItem =
+    (stringReturn ";" EnumEmptyItem) <|>
+    (enumField |>> EnumField) <|>
+    (option |>> EnumOption)
                       
-let enumDefinition = pipe2 (skipString "enum" >>. spaces1 >>. identifier .>> spaces |>> EnumName)
-                           (between (skipString "{" .>> spaces)
-                                    (skipString "}" .>> spaces)
-                                    (many enumItem))
-                           (fun name items -> { Enum.name = name
-                                                items = items })
+let enumDefinition =
+    let make name items =
+        { Enum.name = name
+          items = items }
+    let name = skipString "enum" >>. spaces1 >>. identifier .>> spaces |>> EnumName
+    let openBrace = skipString "{" .>> spaces
+    let closeBrace = skipString "}" .>> spaces
+    let items = between openBrace closeBrace (many enumItem)
+    
+    pipe2 name items make
 
-let makeMessageField repeated fieldType name number options = { MessageField.repeated = repeated
-                                                                name = name
-                                                                fieldType = fieldType
-                                                                number = number
-                                                                options = options }
-
-let messageField = pipe5 ((skipString "repeated" .>> spaces1 |>> fun _ -> true) <|>% false)
-                         (fieldType .>> spaces1)
-                         (identifier .>> spaces .>> skipString "=" .>> spaces |>> MessageFieldName)
-                         (puint32 .>> spaces |>> MessageFieldNumber)
-                         (options .>> spaces .>> skipString ";" .>> spaces)
-                         makeMessageField
+let messageField =
+    let make repeated fieldType name number options =
+        { MessageField.repeated = repeated
+          name = name
+          fieldType = fieldType
+          number = number
+          options = options }
+    let isRepeated = (skipString "repeated" .>> spaces1 |>> fun _ -> true) <|>% false
+    let fieldType = fieldType .>> spaces1
+    let fieldName = identifier .>> spaces .>> skipString "=" .>> spaces |>> MessageFieldName
+    let fieldNumber = puint32 .>> spaces |>> MessageFieldNumber
+    let options = options .>> spaces .>> skipString ";" .>> spaces 
+                         
+    pipe5 isRepeated fieldType fieldName fieldNumber options make
                          
 let messageDefinition, implementation = createParserForwardedToRef()
                          
-let messageItem = (stringReturn ";" MessageEmptyItem)
-              <|> (messageField |>> MessageField)
-              <|> (enumDefinition |>> MessageEnum)
-              <|> (messageDefinition |>> MessageMessage)
-              <|> (option |>> MessageOption)
+let messageItem =
+    (stringReturn ";" MessageEmptyItem) <|>
+    (messageField |>> MessageField) <|>
+    (enumDefinition |>> MessageEnum) <|>
+    (messageDefinition |>> MessageMessage) <|>
+    (option |>> MessageOption)
               
-do implementation.Value <- pipe2 (skipString "message" >>. spaces1 >>. identifier .>> spaces |>> MessageName)
-                                 (between (skipString "{" .>> spaces)
-                                          (skipString "}" .>> spaces)
-                                          (many messageItem))
-                                 (fun name items -> { Message.name = name
-                                                      items = items })
+do implementation.Value <-
+    let make name items =
+        { Message.name = name
+          items = items }
+    let name = skipString "message" >>. spaces1 >>. identifier .>> spaces |>> MessageName 
+    let openBrace = skipString "{" .>> spaces
+    let closeBrace = skipString "}" .>> spaces
+    let items = between openBrace closeBrace (many messageItem)
 
-let protoItem = (stringReturn ";" ProtoEmptyStatement)
-            <|> (import |>> ProtoImport)
-            <|> (package |>> ProtoPackage)
-            <|> (option |>> ProtoOption)
-            <|> (enumDefinition |>> ProtoEnum)
-            <|> (messageDefinition |>> ProtoMessage)
+    pipe2 name items make
+
+let protoItem =
+    (stringReturn ";" ProtoEmptyStatement) <|>
+    (import |>> ProtoImport) <|>
+    (package |>> ProtoPackage) <|>
+    (option |>> ProtoOption) <|>
+    (enumDefinition |>> ProtoEnum) <|>
+    (messageDefinition |>> ProtoMessage)
 
 let proto = spaces >>. syntax >>. (many protoItem)

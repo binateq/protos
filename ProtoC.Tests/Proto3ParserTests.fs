@@ -52,11 +52,11 @@ let ``"abc.def.hig" is full identifier`` () =
     
 [<Fact>]
 let ``"true" is true`` () =
-    Assert.ParseEqual(true, boolLit, "true")
+    Assert.ParseEqual(true, boolLiteral, "true")
     
 [<Fact>]
 let ``"false" is false`` () =
-    Assert.ParseEqual(false, boolLit, "false")
+    Assert.ParseEqual(false, boolLiteral, "false")
 
 [<Fact>]
 let ``"\"Lorem ipsum\"" is string`` () =
