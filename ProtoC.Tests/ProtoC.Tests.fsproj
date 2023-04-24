@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="Assert.fs" />
         <Compile Include="ValidatorsTests.fs" />
         <Compile Include="Proto3ParserTests.fs" />
         <Compile Include="TextFormatParserTests.fs" />

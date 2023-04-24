@@ -2,38 +2,46 @@ module TextFormatParser
 
 open System
 open FParsec
+open StringParsers
 
 // https://developers.google.com/protocol-buffers/docs/text-format-spec
+let comment: Parser<unit, unit> = skipString "#" .>> skipRestOfLine true
+let skipSpaces = many (spaces1 <|> comment)
 
-let comment : Parser<unit, unit> = skipString "#" .>> skipRestOfLine true
-
-let identifier : Parser<string, unit> =
-    let isLetterOrDigit c = isLetter c || isDigit c
+let identifier: StringParser =
+    let first = pchar '_' <|> asciiLetter
+    let next = first <|> digit
     
-    many1Satisfy2L isLetter isLetterOrDigit "identifier"
+    many1Chars2 first next
     
-let decimals0 : Parser<string, unit> = manySatisfy isDigit
-let decimals1 : Parser<string, unit> = many1Satisfy isDigit
-
-// 0, 123 — yes, 0123 — no
-let decLit : Parser<string, unit> = notFollowedBy (pstring "0") >>. decimals1
-                                <|> pstring "0" .>> notFollowedBy digit
-                                
-let optStr (p: Parser<string, unit>) = opt p |>> Option.defaultValue String.Empty
-
-let (>+>) (p1: Parser<string, unit>) (p2: Parser<string, unit>) = p1 .>>. p2 |>> (fun (a, b) -> a + b)
-
-let exp : Parser<string, unit> = pstringCI "e" >+> optStr (pstring "+" <|> pstring "-") >+> decimals1
-
-let floatLit : Parser<string, unit> = (pstring "." >+> decimals1 >+> optStr exp)
-                                  <|> (attempt (decLit >+> exp))
-                                  <|> (decLit >+> pstring "." >+> decimals0 >+> optStr exp)
-
-let decInt : Parser<int, unit> = decLit |>> Int32.Parse
-let octInt : Parser<int, unit> = pstring "0" >>. many1Satisfy isOctal |>> (fun s -> Convert.ToInt32(s, 8))
-let hexInt : Parser<int, unit> = pstringCI "0x" >>. many1Satisfy isHex |>> (fun s -> Convert.ToInt32(s, 16))
-let decFloat : Parser<float, unit> = (attempt (decLit .>> pstringCI "f" |>> Double.Parse))
-                                 <|> (floatLit .>> (opt (pstringCI "f")) |>> (fun s -> Double.Parse(s, System.Globalization.CultureInfo.InvariantCulture)))
+let decimalLiteral: StringParser =
+    (many1Chars2 (anyOf "123456789") digit) <|> pstring "0"
+    
+let floatLiteral: StringParser =
+    let e = pstringCI "E"
+    let point = pstring "."
+    let sign = pstring "+" <|> pstring "-"
+    let digits0 = manyChars digit
+    let digits1 = many1Chars digit
+    let exp = stringPipe3 e (optionString sign) digits1
+    
+    choice [
+        stringPipe3 point digits1 (optionString exp)
+        attempt (stringPipe4 decimalLiteral point digits0 (optionString exp))
+        stringPipe2 decimalLiteral exp
+    ]
+    
+let toInteger (fromBase: int) (s: string) = Convert.ToInt32(s, fromBase)
+    
+let decimalInteger = decimalLiteral |>> int64
+let octalInteger: Parser<int32, unit> = (pstring "0") >>. (many1Chars octal) |>> toInteger 8
+let hexadecimalInteger: Parser<int32, unit> = (pstringCI "0X") >>. (many1Chars hex) |>> toInteger 16
+let decimalFloat =
+    let f = pstringCI "F"
+    choice [
+        attempt (stringPipe2 decimalLiteral f)
+        stringPipe2 floatLiteral (optionString f)
+    ] |>> float
 
 let stringLit : Parser<string, unit> =
     let doubleQuotedChar = satisfy (fun c -> c <> '\\' && c <> '"')

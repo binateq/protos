@@ -4,43 +4,25 @@ open Xunit
 open Proto3Parser
 open Proto3
 
-module Assert =
-    open FParsec
-    
-    let Parse<'r>(parser: Parser<'r, unit>, source: string) =
-        match run parser source with
-        | Success (result, _, _) -> Assert.True(true, sprintf $"%A{result}")
-        | Failure (message, _, _) -> Assert.True(false, message)
-        
-    let ParseEqual<'r>(expected: 'r, parser: Parser<'r, unit>, source: string) =
-        match run parser source with
-        | Success (result, _, _) -> Assert.Equal(expected, result)
-        | Failure (message, _, _) -> Assert.True(false, message)
-
-    let NotParse<'r>(parser: Parser<'r, unit>, source: string) =
-        match run parser source with
-        | Success (result, _, _) -> Assert.True(false, sprintf $"%A{result}")
-        | Failure (message, _, _) -> Assert.True(true, message)
-        
 [<Fact>]
 let ``"abc" is identifier`` () =
-    Assert.Parse(identifier, "abc")
+    Assert.Parse("abc", identifier)
     
 [<Fact>]
 let ``"a_b_c" is identifier`` () =
-    Assert.Parse(identifier, "a_b_c")
+    Assert.Parse("a_b_c", identifier)
     
 [<Fact>]
 let ``"abc123" is identifier`` () =
-    Assert.Parse(identifier, "abc123")
+    Assert.Parse("abc123", identifier)
     
 [<Fact>]
 let ``"_abc" isn't identifier `` () =
-    Assert.NotParse(identifier, "_abc")
+    Assert.NotParse("_abc", identifier)
     
 [<Fact>]
 let ``"123abc" isn't identifier `` () =
-    Assert.NotParse(identifier, "123abc")
+    Assert.NotParse("123abc", identifier)
     
 [<Fact>]
 let ``"abc" is full identifier`` () =
@@ -52,170 +34,175 @@ let ``"abc.def.hig" is full identifier`` () =
     
 [<Fact>]
 let ``"true" is true`` () =
-    Assert.ParseEqual(true, boolLiteral, "true")
+    Assert.ParseEqual("true", boolLiteral, true)
     
 [<Fact>]
 let ``"false" is false`` () =
-    Assert.ParseEqual(false, boolLiteral, "false")
+    Assert.ParseEqual("false", boolLiteral, false)
 
 [<Fact>]
 let ``"\"Lorem ipsum\"" is string`` () =
-    Assert.ParseEqual("Lorem ipsum", stringLiteral, "\"Lorem ipsum\"")
+    Assert.ParseEqual("\"Lorem ipsum\"", stringLiteral, "Lorem ipsum")
 
 [<Fact>]
 let ``"'Lorem ipsum'" is string`` () =
-    Assert.ParseEqual("Lorem ipsum", stringLiteral, "'Lorem ipsum'")
+    Assert.ParseEqual("'Lorem ipsum'", stringLiteral, "Lorem ipsum")
 
 [<Fact>]
 let ``"syntax = 'proto3';" is Syntax`` () =
-    Assert.Parse(syntax, "syntax = 'proto3';")
+    Assert.Parse("syntax = 'proto3';", syntax)
     
 
 [<Fact>]
 let ``"syntax = 'proto3'" without semicolon fails`` () =
-    Assert.NotParse(syntax, "syntax = 'proto3'")
+    Assert.NotParse("syntax = 'proto3'", syntax)
     
 [<Fact>]
 let ``"package abc.def.ghi;" is Package`` () =
-    Assert.ParseEqual(Package "abc.def.ghi", package, "package abc.def.ghi;")
+    Assert.ParseEqual("package abc.def.ghi;", package, Package "abc.def.ghi")
     
 [<Fact>]
 let ``"import weak 'path'; is WeakImport`` () =
-    Assert.ParseEqual(WeakImport "path", import, "import weak 'path';")
+    Assert.ParseEqual("import weak 'path';", import, WeakImport "path")
 
 [<Fact>]
 let ``"import public 'path'; is PublicImport`` () =
-    Assert.ParseEqual(PublicImport "path", import, "import public 'path';")
+    Assert.ParseEqual("import public 'path';", import, PublicImport "path")
 
 [<Fact>]
 let ``"import 'path'; is Import`` () =
-    Assert.ParseEqual(Import "path", import, "import 'path';")
+    Assert.ParseEqual("import 'path';", import, Import "path")
     
 [<Fact>]
 let ``"foo" is valid option name`` () =
-    Assert.ParseEqual(SimpleName "foo", optionName, "foo")
+    Assert.ParseEqual("foo", optionName, SimpleName "foo")
     
 [<Fact>]
 let ``"foo.bar" is valid option name`` () =
-    Assert.ParseEqual(SimpleName "foo.bar", optionName, "foo.bar")
+    Assert.ParseEqual("foo.bar", optionName, SimpleName "foo.bar")
     
 [<Fact>]
 let ``"(foo).bar" is valid option name`` () =
-    Assert.ParseEqual(ComplexName ("foo", "bar"), optionName, "(foo).bar")
+    Assert.ParseEqual("(foo).bar", optionName, ComplexName ("foo", "bar"))
     
 [<Fact>]
 let ``"(foo.bar).baz.qux" is valid option name`` () =
-    Assert.ParseEqual(ComplexName ("foo.bar", "baz.qux"), optionName, "(foo.bar).baz.qux")
+    Assert.ParseEqual("(foo.bar).baz.qux", optionName, ComplexName ("foo.bar", "baz.qux"))
     
 [<Fact>]
 let ``"option foo = 'aaa';" is String Proto.Option``() =
-    Assert.ParseEqual({ Option.name = SimpleName "foo"
-                        value = Constant.String "aaa" }, option, "option foo = 'aaa';")
+    let expected = { Option.name = SimpleName "foo"
+                     value = Constant.String "aaa" }
+    Assert.ParseEqual("option foo = 'aaa';", option, expected)
 
 [<Fact>]
 let ``"option foo = false;" is Bool Proto.Option`` () =
-    Assert.ParseEqual({ Option.name = SimpleName "foo"
-                        value = Constant.Bool false }, option, "option foo = false;")
+    let expected = { Option.name = SimpleName "foo"
+                     value = Constant.Bool false }
+    Assert.ParseEqual("option foo = false;", option, expected)
 
 [<Fact>]
 let ``"option foo = -2;" is Integer Proto.Option`` () =
-    Assert.ParseEqual({ Option.name = SimpleName "foo"
-                        value = Integer -2 }, option, "option foo = -2;")
+    let expected = { Option.name = SimpleName "foo"
+                     value = Integer -2 }
+    Assert.ParseEqual("option foo = -2;", option, expected)
 
 [<Fact>]
 let ``"option foo = +3.14'" is Float Proto.Option`` () =
-    Assert.ParseEqual({ Option.name = SimpleName "foo"
-                        value = Constant.Float 3.14 }, option, "option foo = +3.14;")
+    let expected = { Option.name = SimpleName "foo"
+                     value = Constant.Float 3.14 }
+    Assert.ParseEqual("option foo = +3.14;", option, expected)
 
 [<Fact>]
 let ``"option foo = bar.baz;" is Reference Proto.Option`` () =
-    Assert.ParseEqual({ Option.name = SimpleName "foo"
-                        value = Constant.Reference "bar.baz" }, option, "option foo = bar.baz;")
+    let expected = { Option.name = SimpleName "foo"
+                     value = Constant.Reference "bar.baz" }
+    Assert.ParseEqual("option foo = bar.baz;", option, expected)
 
 [<Fact>]
 let ``"double" is MessageFieldType.Double`` () =
-    Assert.ParseEqual(MessageFieldType.Double, fieldType, "double")
+    Assert.ParseEqual("double", fieldType, MessageFieldType.Double)
 
 [<Fact>]
 let ``"float" is MessageFieldType.Float`` () =
-    Assert.ParseEqual(MessageFieldType.Float, fieldType, "float")
+    Assert.ParseEqual("float", fieldType, MessageFieldType.Float)
 
 [<Fact>]
 let ``"int32" is MessageFieldType.Int32`` () =
-    Assert.ParseEqual(MessageFieldType.Int32, fieldType, "int32")
+    Assert.ParseEqual("int32", fieldType, MessageFieldType.Int32)
 
 [<Fact>]
 let ``"int64" is MessageFieldType.Int64`` () =
-    Assert.ParseEqual(MessageFieldType.Int64, fieldType, "int64")
+    Assert.ParseEqual("int64", fieldType, MessageFieldType.Int64)
 
 [<Fact>]
 let ``"uint32" is MessageFieldType.UInt32`` () =
-    Assert.ParseEqual(MessageFieldType.UInt32, fieldType, "uint32")
+    Assert.ParseEqual("uint32", fieldType, MessageFieldType.UInt32)
 
 [<Fact>]
 let ``"uint64" is MessageFieldType.UInt64`` () =
-    Assert.ParseEqual(MessageFieldType.UInt64, fieldType, "uint64")
+    Assert.ParseEqual("uint64", fieldType, MessageFieldType.UInt64)
 
 [<Fact>]
 let ``"sint32" is MessageFieldType.SInt32`` () =
-    Assert.ParseEqual(MessageFieldType.SInt32, fieldType, "sint32")
+    Assert.ParseEqual("sint32", fieldType, MessageFieldType.SInt32)
 
 [<Fact>]
 let ``"sint64" is MessageFieldType.SInt64`` () =
-    Assert.ParseEqual(MessageFieldType.SInt64, fieldType, "sint64")
+    Assert.ParseEqual("sint64", fieldType, MessageFieldType.SInt64)
 
 [<Fact>]
 let ``"fixed32" is MessageFieldType.Fixed32`` () =
-    Assert.ParseEqual(MessageFieldType.Fixed32, fieldType, "fixed32")
+    Assert.ParseEqual("fixed32", fieldType, MessageFieldType.Fixed32)
 
 [<Fact>]
 let ``"fixed64" is MessageFieldType.Fixed64`` () =
-    Assert.ParseEqual(MessageFieldType.Fixed64, fieldType, "fixed64")
+    Assert.ParseEqual("fixed64", fieldType, MessageFieldType.Fixed64)
 
 [<Fact>]
 let ``"sfixed32" is MessageFieldType.SFixed32`` () =
-    Assert.ParseEqual(MessageFieldType.SFixed32, fieldType, "sfixed32")
+    Assert.ParseEqual("sfixed32", fieldType, MessageFieldType.SFixed32)
 
 [<Fact>]
 let ``"sfixed64" is MessageFieldType.SFixed64`` () =
-    Assert.ParseEqual(MessageFieldType.SFixed64, fieldType, "sfixed64")
+    Assert.ParseEqual("sfixed64", fieldType, MessageFieldType.SFixed64)
 
 [<Fact>]
 let ``"bool" is MessageFieldType.Bool`` () =
-    Assert.ParseEqual(MessageFieldType.Bool, fieldType, "bool")
+    Assert.ParseEqual("bool", fieldType, MessageFieldType.Bool)
 
 [<Fact>]
 let ``"string" is MessageFieldType.String`` () =
-    Assert.ParseEqual(MessageFieldType.String, fieldType, "string")
+    Assert.ParseEqual("string", fieldType, MessageFieldType.String)
 
 [<Fact>]
 let ``"bytes" is MessageFieldType.Bytes`` () =
-    Assert.ParseEqual(MessageFieldType.Bytes, fieldType, "bytes")
+    Assert.ParseEqual("bytes", fieldType, MessageFieldType.Bytes)
 
 [<Fact>]
 let ``"MailAddress" is MessageFieldType.Reference`` () =
-    Assert.ParseEqual(MessageFieldType.Reference "MailAddress", fieldType, "MailAddress")
+    Assert.ParseEqual("MailAddress", fieldType, MessageFieldType.Reference "MailAddress")
     
 [<Fact>]
 let ``"[a = 1, b = 2]" is Some List of Proto.Options`` () =
     let expected = Some [ { Option.name = SimpleName "a"; value = Constant.Integer 1 }
                           { Option.name = SimpleName "b"; value = Constant.Integer 2 } ]
-    Assert.ParseEqual(expected, options, "[a = 1, b = 2]")
+    Assert.ParseEqual("[a = 1, b = 2]", options, expected)
     
 [<Fact>]
 let ``"[]" is Some empty List of Proto.Options`` () =
-    Assert.ParseEqual(Some List.empty<Option>, options, "[]")
+    Assert.ParseEqual("[]", options, Some List.empty<Option>)
     
 [<Fact>]
 let ``"" is None List of Proto.Options`` () =
-    Assert.ParseEqual(None, options, "")
+    Assert.ParseEqual("", options, None)
     
 [<Fact>]
 let ``"STARTED = 1;" is EnumField`` () =
     let expected = { EnumField.name = EnumFieldName "STARTED"
                      value = EnumValue 1
                      options = None }
-    Assert.ParseEqual(expected, enumField, "STARTED = 1;")
+    Assert.ParseEqual("STARTED = 1;", enumField, expected)
     
 [<Fact>]
 let ``"RUNNING = 2 [(custom_option) = "hello world"];" is EnumField`` () =
@@ -223,14 +210,14 @@ let ``"RUNNING = 2 [(custom_option) = "hello world"];" is EnumField`` () =
                      value = EnumValue 2
                      options = Some [ { name = ComplexName ("custom_option", "")
                                         value = Constant.String "hello world" } ] }
-    Assert.ParseEqual(expected, enumField, "RUNNING = 2 [(custom_option) = \"hello world\"];")
+    Assert.ParseEqual("RUNNING = 2 [(custom_option) = \"hello world\"];", enumField, expected)
 
 let ``"enum Foo { option alias = 'Bar'; UNKNOWN = 0; KNOWN = 1; }" is EnumDefinition`` () =
     let expected = { Enum.name = EnumName "Foo"
                      items = [ EnumOption { name = SimpleName "alias"; value = Constant.String "Bar" }
                                EnumField { name = EnumFieldName "UNKNOWN"; value = EnumValue 0; options = None }
                                EnumField { name = EnumFieldName "KNOWN"; value = EnumValue 1; options = None } ] }
-    Assert.ParseEqual(expected, enumDefinition, "enum Foo { option alias = 'Bar'; UNKNOWN = 0; KNOWN = 1; }")
+    Assert.ParseEqual("enum Foo { option alias = 'Bar'; UNKNOWN = 0; KNOWN = 1; }", enumDefinition, expected)
     
 [<Fact>]
 let ``"string login = 1 [packed=true];" is MessageField`` () =
@@ -240,7 +227,7 @@ let ``"string login = 1 [packed=true];" is MessageField`` () =
                      number = MessageFieldNumber 1u
                      options = Some [ { name = SimpleName "packed"
                                         value = Constant.Bool true } ] }
-    Assert.ParseEqual(expected, messageField, "string login = 1 [packed=true];")
+    Assert.ParseEqual("string login = 1 [packed=true];", messageField, expected)
     
 [<Fact>]
 let ``"repeated MailAddress cc = 3;" is MessageField`` () =
@@ -249,7 +236,7 @@ let ``"repeated MailAddress cc = 3;" is MessageField`` () =
                      fieldType = MessageFieldType.Reference "MailAddress"
                      number = MessageFieldNumber 3u
                      options = None }
-    Assert.ParseEqual(expected, messageField, "repeated MailAddress cc = 3;")
+    Assert.ParseEqual("repeated MailAddress cc = 3;", messageField, expected)
 
 [<Fact>]
 let ``"message MailRequest { User user = 1; Mail mail = 2; }" is MessageDefinition`` () =
@@ -264,7 +251,7 @@ let ``"message MailRequest { User user = 1; Mail mail = 2; }" is MessageDefiniti
                                               fieldType = Reference "Mail"
                                               number = MessageFieldNumber 2u
                                               options = None } ] }
-    Assert.ParseEqual(expected, messageDefinition, "message MailRequest { User user = 1; Mail mail = 2; }")
+    Assert.ParseEqual("message MailRequest { User user = 1; Mail mail = 2; }", messageDefinition, expected)
 
 [<Fact>]
 let ``"message User { string login = 1; int64 uid = 2;}" is MessageDefinition`` () =
@@ -279,7 +266,7 @@ let ``"message User { string login = 1; int64 uid = 2;}" is MessageDefinition`` 
                                               fieldType = Int64
                                               number = MessageFieldNumber 2u
                                               options = None } ] }
-    Assert.ParseEqual(expected, messageDefinition, "message User { string login = 1; int64 uid = 2;}")
+    Assert.ParseEqual("message User { string login = 1; int64 uid = 2;}", messageDefinition, expected)
 
 [<Fact>]
 [<Trait("Category", "Integration")>]
@@ -436,4 +423,4 @@ message File {
                                                              number = MessageFieldNumber 2u
                                                              options = None } ] }
                      ]
-    Assert.ParseEqual(expected, proto, example)
+    Assert.ParseEqual(example, proto, expected)

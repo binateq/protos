@@ -6,6 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="StringParsers.fs" />
         <Compile Include="Proto3.fs" />
         <Compile Include="Proto3Parser.fs" />
         <Compile Include="TextFormat.fs" />

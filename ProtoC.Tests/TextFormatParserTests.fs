@@ -5,166 +5,93 @@ open Xunit
 open TextFormatParser
 open TextFormat
 
-module Assert =
-    open FParsec
-    
-    let Parse<'r>(source: string, parser: Parser<'r, unit>) =
-        match run parser source with
-        | Success (result, _, _) -> Assert.True(true, sprintf $"%A{result}")
-        | Failure (message, _, _) -> Assert.True(false, message)
-        
-    let ParseEqual<'r>(source: string, parser: Parser<'r, unit>, expected: 'r) =
-        match run parser source with
-        | Success (result, _, _) -> Assert.Equal(expected, result)
-        | Failure (message, _, _) -> Assert.True(false, message)
-
-    let NotParse<'r>(source: string, parser: Parser<'r, unit>) =
-        match run parser source with
-        | Success (result, _, _) -> Assert.True(false, sprintf $"%A{result}")
-        | Failure (message, _, _) -> Assert.True(true, message)
+[<Fact>]
+let ``comment parses comment with \n and without \n`` () =
+    Assert.Parse("# comment", comment >>. eof)
+    Assert.Parse("# comment\n", comment >>. eof)
 
 [<Fact>]
-let ``123 is decimals`` () =
-    Assert.ParseEqual("123", decimals0, "123")
-    Assert.ParseEqual("123", decimals1, "123")
-    
-[<Fact>]
-let ``abc is decimals with minimum zero repetitions`` () =
-    Assert.Parse("abc", decimals0)
-    
-[<Fact>]
-let ``abc is not decimals with minimum one repetitions`` () =
-    Assert.NotParse("abc", decimals1)
+let ``skipSpaces skips spaces`` () =
+    Assert.Parse("- 1", pstring "-" .>> skipSpaces >>. pstring "1")
 
 [<Fact>]
-let ``#abc is comment`` () =
-    Assert.Parse("#abc", comment)
-    
-[<Fact>]
-let ``# abc is comment`` () =
-    Assert.Parse("# abc", comment)
+let ``skipSpaces skips comments`` () =
+    Assert.Parse("-# comment\n# another comment\n1", pstring "-" .>> skipSpaces >>. pstring "1")
 
 [<Fact>]
-let ``# abc\n is comment`` () =
-    Assert.Parse("# abc\n", comment)
+let ``skipSpaces skips spaces and comments`` () =
+    Assert.Parse("- # comment\n # another comment\n1", pstring "-" .>> skipSpaces >>. pstring "1")
     
 [<Fact>]
-let ``#\n is comment`` () =
-    Assert.Parse("#\n", comment)
+let ``skipSpaces works without spaces or comments`` () =
+    Assert.Parse("-1", pstring "-" .>> skipSpaces >>. pstring "1")
 
 [<Fact>]
-let ``\n is not comment`` () =
-    Assert.NotParse("\n", comment)
-    
-[<Fact>]
-let ``abc123 is identifier`` () =
+let ``identifier parses abc123`` () =
     Assert.Parse("abc123", identifier)
     
 [<Fact>]
-let ``aBc123 is identifier`` () =
+let ``identifier parses aBc123`` () =
     Assert.Parse("aBc123", identifier)
     
 [<Fact>]
-let ``ABC is identifier`` () =
+let ``identifier parses ABC`` () =
     Assert.Parse("ABC", identifier)
 
 [<Fact>]
-let ``123 is not identifier`` () =
+let ``identifier doesn't parse 123`` () =
     Assert.NotParse("123", identifier)
     
 [<Fact>]
-let ``123 is decimal literal"`` () =
-    Assert.Parse("123", decLit)    
+let ``decimalLiteral parses 123`` () =
+    Assert.ParseEqual("123", decimalLiteral, "123")    
 
 [<Fact>]
-let ``0 is decimal literal`` () =
-    Assert.Parse("0", decLit)    
+let ``decimalLiteral parses 0`` () =
+    Assert.ParseEqual("0", decimalLiteral, "0")
 
 [<Fact>]
-let ``0123 is not decimal literal`` () =
-    Assert.NotParse("0123", decLit)
+let ``decimalLiteral doesn't parse 0`` () =
+    Assert.NotParse("0123", decimalLiteral)
     
 [<Fact>]
-let ``abc is optional abc`` () =
-    Assert.ParseEqual("abc", optStr (pstring "abc"), "abc")
-
-[<Fact>]
-let ``def is optional abc`` () =
-    Assert.ParseEqual("def", optStr (pstring "abc"), "")
-
-[<Fact>]
-let ``e+100 is exp`` () =
-    Assert.ParseEqual("e+100", exp, "e+100")
-        
-[<Fact>]
-let ``E-100 is exp`` () =
-    Assert.ParseEqual("E-100", exp, "E-100")
-    
+let ``float:Literal parses .123, .123e100, .123E+100, .123e-100`` () =
+    Assert.ParseEqual(".123", floatLiteral, ".123")
+    Assert.ParseEqual(".123e100", floatLiteral, ".123e100")
+    Assert.ParseEqual(".123E+100", floatLiteral, ".123E+100")
+    Assert.ParseEqual(".123e-100", floatLiteral, ".123e-100")
     
 [<Fact>]
-let ``e100 is exp`` () =
-    Assert.ParseEqual("e100", exp, "e100")
-    
-    
-[<Fact>]
-let ``e +100 is not exp`` () =
-    Assert.NotParse("e +100", exp)
-    
-[<Fact>]
-let ``abc is optional exp`` () =
-    Assert.ParseEqual("abc", optStr exp, "")
-
-[<Fact>]
-let ``.123 is floatLit`` () =
-    Assert.Parse(".123", floatLit)
-
-[<Fact>]
-let ``.123e10 is floatLit`` () =
-    Assert.Parse(".123e10", floatLit)
-
-[<Fact>]
-let ``.123e is not floatLit`` () =
-    Assert.NotParse(".123e", floatLit)
-
-[<Fact>]
-let ``123. is floatLit`` () =
-    Assert.Parse("123.", floatLit)
-
-[<Fact>]
-let ``123.456 is floatLit`` () =
-    Assert.Parse("123.456", floatLit)
-
-[<Fact>]
-let ``123.456e78 is floatLit`` () =
-    Assert.Parse("123.456r78", floatLit)
+let ``float:Literal parses 123., 123.100 123.e100, 123.E+100, 123.e-100`` () =
+    Assert.ParseEqual("123.", floatLiteral, "123.")
+    Assert.ParseEqual("123.100", floatLiteral, "123.100")
+    Assert.ParseEqual("123.e100", floatLiteral, "123.e100")
+    Assert.ParseEqual("123.E+100", floatLiteral, "123.E+100")
+    Assert.ParseEqual("123.e-100", floatLiteral, "123.e-100")
     
 [<Fact>]
-let ``123e78 is floatLit`` () =
-    Assert.Parse("123e78", floatLit)
-    
-[<Fact>]
-let ``123 is int 123`` () =
-    Assert.ParseEqual("123", decInt, 123)
-    
-[<Fact>]
-let ``0123 is int 83`` () =
-    Assert.ParseEqual("0123", octInt, 83)
-    
-[<Fact>]
-let ``0x123 is int 291`` () =
-    Assert.ParseEqual("0x123", hexInt, 291)
+let ``float:Literal parses 123e100, 123.E+100, 123.e-100`` () =
+    Assert.ParseEqual("123e100", floatLiteral, "123e100")
+    Assert.ParseEqual("123E+100", floatLiteral, "123E+100")
+    Assert.ParseEqual("123e-100", floatLiteral, "123e-100")
 
 [<Fact>]
-let ``123.456 is float 123.456`` () =
-    Assert.ParseEqual("123.456", decFloat, 123.456)
-
-[<Fact>]
-let ``123.456F is float 123.456`` () =
-    Assert.ParseEqual("123.456F", decFloat, 123.456)
+let ``decimalInteger parses 123, 0, but not 0123`` () =
+    Assert.ParseEqual("123", decimalInteger, 123)
+    Assert.ParseEqual("0", decimalInteger, 0)
+    Assert.NotParse("0123", decimalInteger)
     
 [<Fact>]
-let ``123F is float 123`` () =
-    Assert.ParseEqual("123F", decFloat, 123.0)
+let ``octalInteger parses 0123, but not 0, 123, 08`` () =
+    Assert.ParseEqual("0123", octalInteger, 0o123)
+    Assert.NotParse("0", octalInteger)
+    Assert.NotParse("123", octalInteger)
+    Assert.NotParse("08", octalInteger)
+    
+[<Fact>]
+let ``hexadecimalInteger parser 0x123, 0X0`` () =
+    Assert.ParseEqual("0x123", hexadecimalInteger, 0x123)
+    Assert.ParseEqual("0X0", hexadecimalInteger, 0x0)
     
 [<Fact>]
 let ``"abc" is string literal`` () =

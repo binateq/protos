@@ -1,13 +1,11 @@
 module Proto3Parser
 
-open FParsec
 open Proto3
+open FParsec
 
 // https://developers.google.com/protocol-buffers/docs/reference/proto3-spec
-let identifier : Parser<string, unit> =
-    let isIdentifierChar c = isLetter c || isDigit c || c = '_'
-    
-    many1Satisfy2L isLetter isIdentifierChar "identifier"
+let identifier =
+    many1Chars2 asciiLetter (asciiLetter <|> digit <|> pchar '_')
     
 let fullIdentifier = stringsSepBy1 identifier (pstring ".")
             
