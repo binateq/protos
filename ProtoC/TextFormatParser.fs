@@ -39,8 +39,8 @@ let hexadecimalInteger: Parser<int32, unit> = (pstringCI "0X") >>. (many1Chars h
 let decimalFloat =
     let f = pstringCI "F"
     choice [
-        attempt (stringPipe2 decimalLiteral f)
-        stringPipe2 floatLiteral (optionString f)
+        attempt (decimalLiteral .>> f)
+        floatLiteral .>> (optionString f)
     ] |>> float
 
 let stringLit : Parser<string, unit> =

@@ -70,7 +70,7 @@ let ``float:Literal parses 123., 123.100 123.e100, 123.E+100, 123.e-100`` () =
     Assert.ParseEqual("123.e-100", floatLiteral, "123.e-100")
     
 [<Fact>]
-let ``float:Literal parses 123e100, 123.E+100, 123.e-100`` () =
+let ``floatLiteral parses 123e100, 123.E+100, 123.e-100`` () =
     Assert.ParseEqual("123e100", floatLiteral, "123e100")
     Assert.ParseEqual("123E+100", floatLiteral, "123E+100")
     Assert.ParseEqual("123e-100", floatLiteral, "123e-100")
@@ -89,9 +89,15 @@ let ``octalInteger parses 0123, but not 0, 123, 08`` () =
     Assert.NotParse("08", octalInteger)
     
 [<Fact>]
-let ``hexadecimalInteger parser 0x123, 0X0`` () =
+let ``hexadecimalInteger parses 0x123, 0X0`` () =
     Assert.ParseEqual("0x123", hexadecimalInteger, 0x123)
     Assert.ParseEqual("0X0", hexadecimalInteger, 0x0)
+    
+[<Fact>]
+let ``decimalFloat parses 10f, 10.0, and 10.0f`` () =
+    Assert.ParseEqual("10f", decimalFloat, 10.0)
+    Assert.ParseEqual("10.0", decimalFloat, 10.0)
+    Assert.ParseEqual("10.0f", decimalFloat, 10.0)
     
 [<Fact>]
 let ``"abc" is string literal`` () =
