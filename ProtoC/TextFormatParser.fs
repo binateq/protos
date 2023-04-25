@@ -31,23 +31,42 @@ let floatLiteral: StringParser =
         stringPipe2 decimalLiteral exp
     ]
     
-let toInteger (fromBase: int) (s: string) = Convert.ToInt32(s, fromBase)
-    
+let fromOct s = Convert.ToInt64(s, 8)
+let fromHex s = Convert.ToInt64(s, 16)
+
 let decimalInteger = decimalLiteral |>> int64
-let octalInteger: Parser<int32, unit> = (pstring "0") >>. (many1Chars octal) |>> toInteger 8
-let hexadecimalInteger: Parser<int32, unit> = (pstringCI "0X") >>. (many1Chars hex) |>> toInteger 16
+let octalInteger: Parser<int64, unit> = (pstring "0") >>. (many1Chars octal) |>> fromOct
+let hexadecimalInteger: Parser<int64, unit> = (pstringCI "0X") >>. (many1Chars hex) |>> fromHex
 let decimalFloat =
     let f = pstringCI "F"
     choice [
         attempt (decimalLiteral .>> f)
         floatLiteral .>> (optionString f)
     ] |>> float
-
-let stringLit : Parser<string, unit> =
-    let doubleQuotedChar = satisfy (fun c -> c <> '\\' && c <> '"')
-    let singleQuotedChar = satisfy (fun c -> c <> '\\' && c <> '\'')
     
-    (between (skipString "\"") (skipString "\"") (manyChars doubleQuotedChar))
-<|> (between (skipString "\'") (skipString "\'") (manyChars singleQuotedChar))
-
-let stringValue = many1 (spaces >>. stringLit) |>> (fun ss -> ss |> Seq.ofList |> String.concat "")
+let stringLiteral: StringParser =
+    let escape =
+        choice [
+            stringReturn "\\a" '\a'
+            stringReturn "\\b" '\b'
+            stringReturn "\\f" '\f'
+            stringReturn "\\n" '\n'
+            stringReturn "\\r" '\r'
+            stringReturn "\\t" '\t'
+            stringReturn "\\v" '\v'
+            stringReturn "\\?" '?'
+            stringReturn "\\\\" '\\'
+            stringReturn "\\\'" '\''
+            stringReturn "\\\"" '\"'
+            pstring "\\x" >>. manyMinMaxSatisfy 1 2 isHex |>> (fromHex >> Convert.ToChar)
+            pstring "\\u" >>. manyMinMaxSatisfy 4 4 isHex |>> (fromHex >> Convert.ToChar)
+            // pstring "\\U000" >>. manyMinMaxSatisfy 5 5 isHex |>> (fromHex >> Convert.ToChar)
+            // pstring "\\U0010" >>. manyMinMaxSatisfy 4 3 isHex |>> (fromHex >> ((+) 0x100_000L) >> Convert.ToChar) 
+            pstring "\\" >>. manyMinMaxSatisfy 1 3 isOctal |>> (fromOct >> Convert.ToChar)
+        ]
+        
+    let singleQuoteChar = noneOf "\0\'\n\\" <|> escape
+    let doubleQuoteChar = noneOf "\0\"\n\\" <|> escape
+    
+    (between (skipChar '\'') (skipChar '\'') (manyChars singleQuoteChar)) <|>
+    (between (skipChar '\"') (skipChar '\"') (manyChars doubleQuoteChar))

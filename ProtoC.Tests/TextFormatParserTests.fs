@@ -100,17 +100,11 @@ let ``decimalFloat parses 10f, 10.0, and 10.0f`` () =
     Assert.ParseEqual("10.0f", decimalFloat, 10.0)
     
 [<Fact>]
-let ``"abc" is string literal`` () =
-    Assert.ParseEqual("\"abc\"", stringLit, "abc")
-    
-[<Fact>]
-let ``'abc' is string literal`` () =
-    Assert.ParseEqual("'abc'", stringLit, "abc")
-
-[<Fact>]
-let ``'abc'"def" is string value`` () =
-    Assert.ParseEqual("'abc'\"def\"", stringValue, "abcdef")
-    
-[<Fact>]
-let ``'abc' 'def' is string value`` () =
-    Assert.ParseEqual("'abc' 'def'", stringValue, "abcdef")
+let ``stringLiteral parses valid strings`` () =
+    Assert.ParseEqual("""'abfnrtv\a\b\f\n\r\t\v'""", stringLiteral, "abfnrtv\a\b\f\n\r\t\v")
+    Assert.ParseEqual("""'\?"\"\''""", stringLiteral, "?\"\"\'")
+    Assert.ParseEqual("""'\123'""", stringLiteral, "S")
+    Assert.ParseEqual("""'\x23'""", stringLiteral, "\x23")
+    Assert.ParseEqual("""'\u12345'""", stringLiteral, "\u12345")
+    //Assert.ParseEqual("""'\U00012345'""", stringLiteral, "\U00012345")
+    //Assert.ParseEqual("""'\U00101234'""", stringLiteral, "\U00101234")
