@@ -108,3 +108,28 @@ let ``stringLiteral parses valid strings`` () =
     Assert.ParseEqual("""'\u12345'""", stringLiteral, "\u12345")
     //Assert.ParseEqual("""'\U00012345'""", stringLiteral, "\U00012345")
     //Assert.ParseEqual("""'\U00101234'""", stringLiteral, "\U00101234")
+
+[<Fact>]
+let ``stringValue parses a few strings`` () =
+    Assert.ParseEqual("'abc' 'def''ghi'", stringValue, "abcdefghi")
+    Assert.ParseEqual("'abc'#comment\n\"def\"'ghi'", stringValue, "abcdefghi")
+    
+[<Fact>]
+let ``scalarValue parses scalar values`` () =
+    Assert.ParseEqual("'abc' 'def''ghi'", scalarValue, ScalarValue.String "abcdefghi")
+    Assert.ParseEqual("-#comment\n.5", scalarValue, ScalarValue.Float -0.5)
+    Assert.ParseEqual(".5", scalarValue, ScalarValue.Float 0.5)
+    Assert.ParseEqual("inf", scalarValue, ScalarValue.Identifier "inf")
+    Assert.ParseEqual("-inf", scalarValue, ScalarValue.SignedIdentifier "inf")
+    Assert.ParseEqual("123", scalarValue, ScalarValue.DecUnsignedInteger 123UL)
+    //Assert.ParseEqual("0123", scalarValue, ScalarValue.OctUnsignedInteger 0o123UL)
+    //Assert.ParseEqual("0x123", scalarValue, ScalarValue.HexUnsignedInteger 0x123UL)
+    Assert.ParseEqual("-123", scalarValue, ScalarValue.DecSignedInteger -123L)
+    //Assert.ParseEqual("-0123", scalarValue, ScalarValue.OctSignedInteger -0o123L)
+    //Assert.ParseEqual("-0x123", scalarValue, ScalarValue.HexSignedInteger -0x123L)
+
+[<Fact>]
+let ``fieldName parses extension, any and identifier`` () =
+    Assert.ParseEqual("name", fieldName, FieldName.Identifier "name")
+    Assert.ParseEqual("[com.typename]", fieldName, FieldName.Extension "com.typename")
+    Assert.ParseEqual("[com.domain/com.typename]", fieldName, FieldName.Any ("com.domain", "com.typename"))

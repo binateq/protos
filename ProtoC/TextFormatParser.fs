@@ -3,6 +3,7 @@ module TextFormatParser
 open System
 open FParsec
 open StringParsers
+open TextFormat
 
 // https://developers.google.com/protocol-buffers/docs/text-format-spec
 let comment: Parser<unit, unit> = skipString "#" .>> skipRestOfLine true
@@ -12,7 +13,9 @@ let identifier: StringParser =
     let first = pchar '_' <|> asciiLetter
     let next = first <|> digit
     
-    many1Chars2 first next
+    many1Chars2 first next .>> skipSpaces
+    
+let fullIdentifier = stringsSepBy1 identifier (pstring ".")
     
 let decimalLiteral: StringParser =
     (many1Chars2 (anyOf "123456789") digit) <|> pstring "0"
@@ -34,14 +37,14 @@ let floatLiteral: StringParser =
 let fromOct s = Convert.ToInt64(s, 8)
 let fromHex s = Convert.ToInt64(s, 16)
 
-let decimalInteger = decimalLiteral |>> int64
-let octalInteger: Parser<int64, unit> = (pstring "0") >>. (many1Chars octal) |>> fromOct
-let hexadecimalInteger: Parser<int64, unit> = (pstringCI "0X") >>. (many1Chars hex) |>> fromHex
+let decimalInteger = decimalLiteral .>> skipSpaces |>> int64
+let octalInteger: Parser<int64, unit> = (pstring "0") >>. (many1Chars octal) .>> skipSpaces |>> fromOct
+let hexadecimalInteger: Parser<int64, unit> = (pstringCI "0X") >>. (many1Chars hex) .>> skipSpaces |>> fromHex
 let decimalFloat =
     let f = pstringCI "F"
     choice [
-        attempt (decimalLiteral .>> f)
-        floatLiteral .>> (optionString f)
+        attempt (decimalLiteral .>> f .>> skipSpaces)
+        floatLiteral .>> (optionString f) .>> skipSpaces
     ] |>> float
     
 let stringLiteral: StringParser =
@@ -70,3 +73,27 @@ let stringLiteral: StringParser =
     
     (between (skipChar '\'') (skipChar '\'') (manyChars singleQuoteChar)) <|>
     (between (skipChar '\"') (skipChar '\"') (manyChars doubleQuoteChar))
+
+let stringValue = many1Strings (stringLiteral .>> skipSpaces)
+
+let scalarValue =
+    choice [
+        stringValue |>> ScalarValue.String
+        attempt decimalFloat |>> ScalarValue.Float
+        attempt (pchar '-' >>. skipSpaces >>. decimalFloat) |>> ((~-) >> ScalarValue.Float)
+        identifier |>> ScalarValue.Identifier
+        attempt (pchar '-' >>. skipSpaces >>. identifier) |>> ScalarValue.SignedIdentifier
+        attempt (pchar '-' >>. skipSpaces >>. decimalInteger) |>> ((~-) >> ScalarValue.DecSignedInteger)
+        //attempt (pchar '-' >>. skipSpaces >>. octalInteger) |>> ((~-) >> ScalarValue.OctSignedInteger)
+        //attempt (pchar '-' >>. skipSpaces >>. hexadecimalInteger) |>> ((~-) >> ScalarValue.HexSignedInteger)
+        attempt decimalInteger |>> (uint64 >> ScalarValue.DecUnsignedInteger)
+        //attempt octalInteger |>> (uint64 >> ScalarValue.OctUnsignedInteger)
+        //hexadecimalInteger |>> (uint64 >> ScalarValue.HexUnsignedInteger)
+    ]
+
+let fieldName =
+    choice [
+        identifier .>> skipSpaces |>> FieldName.Identifier
+        attempt (pchar '[' .>> skipSpaces >>. fullIdentifier .>> skipSpaces .>> pchar ']' .>>skipSpaces) |>> FieldName.Extension
+        pchar '[' .>> skipSpaces >>. fullIdentifier .>> skipSpaces .>> pchar '/' .>> skipSpaces .>>. fullIdentifier .>> skipSpaces .>> pchar ']' .>> skipSpaces |>> FieldName.Any
+    ]
