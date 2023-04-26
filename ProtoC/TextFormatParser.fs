@@ -90,6 +90,12 @@ let scalarValue =
         //attempt octalInteger |>> (uint64 >> ScalarValue.OctUnsignedInteger)
         //hexadecimalInteger |>> (uint64 >> ScalarValue.HexUnsignedInteger)
     ]
+    
+let scalarList =
+    let openBracket = skipChar '[' .>> skipSpaces
+    let closeBracket = skipChar ']' .>> skipSpaces
+    let values = sepBy scalarValue (skipChar ',' .>> skipSpaces)
+    between openBracket closeBracket values
 
 let fieldName =
     choice [

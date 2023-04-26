@@ -133,3 +133,12 @@ let ``fieldName parses extension, any and identifier`` () =
     Assert.ParseEqual("name", fieldName, FieldName.Identifier "name")
     Assert.ParseEqual("[com.typename]", fieldName, FieldName.Extension "com.typename")
     Assert.ParseEqual("[com.domain/com.typename]", fieldName, FieldName.Any ("com.domain", "com.typename"))
+
+[<Fact>]
+let ``scalarList parses scalar values list`` () =
+    let expected = [
+        ScalarValue.DecUnsignedInteger 1UL
+        ScalarValue.String "abc"
+        ScalarValue.SignedIdentifier "def"
+    ]
+    Assert.ParseEqual("[ 1, 'abc', -def]", scalarList, expected)
