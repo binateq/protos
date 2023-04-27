@@ -17,4 +17,21 @@ type ScalarValue =
     | OctUnsignedInteger of uint64
     | HexUnsignedInteger of uint64
 
-type ScalarList = ScalarValue list
+type ScalarFieldValue =
+    | ScalarValue of ScalarValue
+    | ScalarList of ScalarValue list
+    
+type ScalarField =
+    { name: FieldName
+      value: ScalarFieldValue }
+and Field =
+    | ScalarField of ScalarField
+    | MessageField of MessageField
+and Message = Field list
+and MessageValue = Message
+and MessageFieldValue =
+    | Value of MessageValue
+    | List of MessageValue list
+and MessageField =
+    { name: FieldName
+      value: MessageFieldValue }

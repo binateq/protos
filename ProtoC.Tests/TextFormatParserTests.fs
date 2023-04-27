@@ -142,3 +142,14 @@ let ``scalarList parses scalar values list`` () =
         ScalarValue.SignedIdentifier "def"
     ]
     Assert.ParseEqual("[ 1, 'abc', -def]", scalarList, expected)
+    
+[<Fact>]
+let ``scalarField parses scalar fields`` () =
+    Assert.ParseEqual("foo: 10", scalarField, {
+        ScalarField.name = FieldName.Identifier "foo"
+        value = ScalarFieldValue.ScalarValue (DecUnsignedInteger 10UL)
+    })
+    Assert.ParseEqual("[foo.bar] : [10, 20]", scalarField, {
+        ScalarField.name = FieldName. Extension "foo.bar"
+        value = ScalarFieldValue.ScalarList [DecUnsignedInteger 10UL; DecUnsignedInteger 20UL]
+    })

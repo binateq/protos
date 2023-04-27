@@ -7,7 +7,7 @@ open TextFormat
 
 // https://developers.google.com/protocol-buffers/docs/text-format-spec
 let comment: Parser<unit, unit> = skipString "#" .>> skipRestOfLine true
-let skipSpaces = many (spaces1 <|> comment)
+let skipSpaces = many (spaces1 <|> comment) |>> ignore
 
 let identifier: StringParser =
     let first = pchar '_' <|> asciiLetter
@@ -98,8 +98,21 @@ let scalarList =
     between openBracket closeBracket values
 
 let fieldName =
+    let openBracket = skipChar '[' .>> skipSpaces
+    let closeBracket = skipChar ']' .>> skipSpaces
+    let inBrackets some = between openBracket closeBracket some 
     choice [
         identifier .>> skipSpaces |>> FieldName.Identifier
-        attempt (pchar '[' .>> skipSpaces >>. fullIdentifier .>> skipSpaces .>> pchar ']' .>>skipSpaces) |>> FieldName.Extension
-        pchar '[' .>> skipSpaces >>. fullIdentifier .>> skipSpaces .>> pchar '/' .>> skipSpaces .>>. fullIdentifier .>> skipSpaces .>> pchar ']' .>> skipSpaces |>> FieldName.Any
+        attempt (inBrackets fullIdentifier .>> skipSpaces |>> FieldName.Extension)
+        inBrackets (fullIdentifier .>> skipSpaces .>> pchar '/' .>> skipSpaces .>>. fullIdentifier .>> skipSpaces) |>> FieldName.Any
     ]
+
+let scalarField =
+    let make (name, value) =
+        { ScalarField.name = name
+          value = value }
+    let scalarFieldValue =
+        (scalarList |>> ScalarFieldValue.ScalarList) <|>
+        (scalarValue |>> ScalarFieldValue.ScalarValue)
+    
+    fieldName .>> pchar ':' .>> skipSpaces .>>. scalarFieldValue |>> make
