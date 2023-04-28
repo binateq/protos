@@ -9,13 +9,27 @@ open TextFormat
 let comment: Parser<unit, unit> = skipString "#" .>> skipRestOfLine true
 let skipSpaces = many (spaces1 <|> comment) |>> ignore
 
+let skipCharSpaces c = skipChar c .>> skipSpaces
+
+let brackets content =
+    between (skipCharSpaces '[') (skipCharSpaces ']') content
+
+let braces content =
+    between (skipCharSpaces '{') (skipCharSpaces '}') content
+
+let angles content =
+    between (skipCharSpaces '<') (skipCharSpaces '>') content
+    
+let commaSeparated value =
+    sepBy value (skipCharSpaces ',')
+
 let identifier: StringParser =
     let first = pchar '_' <|> asciiLetter
     let next = first <|> digit
     
     many1Chars2 first next .>> skipSpaces
     
-let fullIdentifier = stringsSepBy1 identifier (pstring ".")
+let fullIdentifier = stringsSepBy1 identifier (pstring ".") .>> skipSpaces
     
 let decimalLiteral: StringParser =
     (many1Chars2 (anyOf "123456789") digit) <|> pstring "0"
@@ -80,10 +94,10 @@ let scalarValue =
     choice [
         stringValue |>> ScalarValue.String
         attempt decimalFloat |>> ScalarValue.Float
-        attempt (pchar '-' >>. skipSpaces >>. decimalFloat) |>> ((~-) >> ScalarValue.Float)
+        attempt (skipCharSpaces '-' >>. decimalFloat) |>> ((~-) >> ScalarValue.Float)
         identifier |>> ScalarValue.Identifier
-        attempt (pchar '-' >>. skipSpaces >>. identifier) |>> ScalarValue.SignedIdentifier
-        attempt (pchar '-' >>. skipSpaces >>. decimalInteger) |>> ((~-) >> ScalarValue.DecSignedInteger)
+        attempt (skipCharSpaces '-' >>. identifier) |>> ScalarValue.SignedIdentifier
+        attempt (skipCharSpaces '-' >>. decimalInteger) |>> ((~-) >> ScalarValue.DecSignedInteger)
         //attempt (pchar '-' >>. skipSpaces >>. octalInteger) |>> ((~-) >> ScalarValue.OctSignedInteger)
         //attempt (pchar '-' >>. skipSpaces >>. hexadecimalInteger) |>> ((~-) >> ScalarValue.HexSignedInteger)
         attempt decimalInteger |>> (uint64 >> ScalarValue.DecUnsignedInteger)
@@ -91,28 +105,43 @@ let scalarValue =
         //hexadecimalInteger |>> (uint64 >> ScalarValue.HexUnsignedInteger)
     ]
     
-let scalarList =
-    let openBracket = skipChar '[' .>> skipSpaces
-    let closeBracket = skipChar ']' .>> skipSpaces
-    let values = sepBy scalarValue (skipChar ',' .>> skipSpaces)
-    between openBracket closeBracket values
+let scalarList = brackets (commaSeparated scalarValue)
 
 let fieldName =
-    let openBracket = skipChar '[' .>> skipSpaces
-    let closeBracket = skipChar ']' .>> skipSpaces
-    let inBrackets some = between openBracket closeBracket some 
     choice [
         identifier .>> skipSpaces |>> FieldName.Identifier
-        attempt (inBrackets fullIdentifier .>> skipSpaces |>> FieldName.Extension)
-        inBrackets (fullIdentifier .>> skipSpaces .>> pchar '/' .>> skipSpaces .>>. fullIdentifier .>> skipSpaces) |>> FieldName.Any
+        attempt (brackets fullIdentifier |>> FieldName.Extension)
+        brackets (fullIdentifier .>> skipCharSpaces '-' .>>. fullIdentifier) |>> FieldName.Any
     ]
+    
+let fieldSeparator = opt (skipChar ',' <|> skipChar ';') .>> skipSpaces
 
 let scalarField =
     let make (name, value) =
         { ScalarField.name = name
           value = value }
-    let scalarFieldValue =
-        (scalarList |>> ScalarFieldValue.ScalarList) <|>
+    let value =
+        scalarList |>> ScalarFieldValue.ScalarList <|>
         (scalarValue |>> ScalarFieldValue.ScalarValue)
     
-    fieldName .>> pchar ':' .>> skipSpaces .>>. scalarFieldValue |>> make
+    fieldName .>> skipCharSpaces ':' .>>. value .>> fieldSeparator |>> make
+    
+let message, implementation = createParserForwardedToRef()
+let messageValue = braces message <|> angles message
+let messageList = brackets (commaSeparated messageValue)
+
+let messageField =
+    let make (name, value) =
+        { MessageField.name = name
+          value = value }
+    let value =
+        messageList |>> MessageFieldValue.MessageList <|>
+        (messageValue |>> MessageFieldValue.MessageValue)
+        
+    fieldName .>> opt (skipCharSpaces ':') .>>. value .>> fieldSeparator |>> make
+
+let field =
+    scalarField |>> ScalarField <|>
+    (messageField |>> MessageField)
+    
+do implementation.Value <- many field |>> Message

@@ -24,14 +24,14 @@ type ScalarFieldValue =
 type ScalarField =
     { name: FieldName
       value: ScalarFieldValue }
-and Field =
-    | ScalarField of ScalarField
-    | MessageField of MessageField
-and Message = Field list
-and MessageValue = Message
-and MessageFieldValue =
-    | Value of MessageValue
-    | List of MessageValue list
+
+type MessageFieldValue =
+    | MessageValue of Message
+    | MessageList of Message list
 and MessageField =
     { name: FieldName
       value: MessageFieldValue }
+and Field =
+    | ScalarField of ScalarField
+    | MessageField of MessageField
+and Message = Message of Field list

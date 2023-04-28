@@ -153,3 +153,22 @@ let ``scalarField parses scalar fields`` () =
         ScalarField.name = FieldName. Extension "foo.bar"
         value = ScalarFieldValue.ScalarList [DecUnsignedInteger 10UL; DecUnsignedInteger 20UL]
     })
+    
+[<Fact>]
+let ``messageField parses message fields`` () =
+    Assert.ParseEqual("foo {bar: 10 baz: 20}", messageField, {
+        MessageField.name = FieldName.Identifier "foo"
+        value = MessageValue (Message [
+    ScalarField { name = FieldName.Identifier "bar"
+                  value = ScalarFieldValue.ScalarValue (DecUnsignedInteger 10UL) };
+    ScalarField { name = FieldName.Identifier "baz"
+                  value = ScalarFieldValue.ScalarValue (DecUnsignedInteger 20UL) } ])
+    })
+    Assert.ParseEqual("foo : <bar: 10, baz: 20;>", messageField, {
+        MessageField.name = FieldName.Identifier "foo"
+        value = MessageValue (Message [
+    ScalarField { name = FieldName.Identifier "bar"
+                  value = ScalarFieldValue.ScalarValue (DecUnsignedInteger 10UL) };
+    ScalarField { name = FieldName.Identifier "baz"
+                  value = ScalarFieldValue.ScalarValue (DecUnsignedInteger 20UL) } ])
+    })
