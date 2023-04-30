@@ -4,9 +4,11 @@ type EnumName = EnumName of string
 type EnumFieldName = EnumFieldName of string
 type EnumValue = EnumValue of int32
 
+
 type OptionName =
     | SimpleName of string
     | ComplexName of string * string
+
 
 type Constant =
     | Reference of string
@@ -15,16 +17,19 @@ type Constant =
     | String of string
     | Bool of bool
 
+
 type Option = {
     name: OptionName
     value: Constant
 }
+
 
 type EnumField = {
     name: EnumFieldName
     value: EnumValue
     options: Option list option
 }
+
 
 type EnumItem =
     | EnumField of EnumField
@@ -37,10 +42,11 @@ type Enum = {
     items: EnumItem list
 }
 
-type MessageName = MessageName of string
 
+type MessageName = MessageName of string
 type MessageFieldName = MessageFieldName of string
-    
+
+
 type MessageFieldType =
     | Double
     | Float
@@ -59,7 +65,9 @@ type MessageFieldType =
     | Bytes
     | Reference of string
 
+
 type MessageFieldNumber = MessageFieldNumber of uint32
+
 
 type MessageField = {
     repeated: bool
@@ -68,7 +76,8 @@ type MessageField = {
     number: MessageFieldNumber
     options: Option list option
 }
-    
+
+   
 type MessageItem =
     | MessageField of MessageField
     | MessageEnum of Enum
@@ -80,12 +89,15 @@ and Message = {
     items: MessageItem list
 }
 
+
 type Package = Package of string
+
 
 type Import =
     | Import of string
     | WeakImport of string
     | PublicImport of string
+
 
 type ProtoItem =
     | ProtoImport of Import

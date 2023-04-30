@@ -3,6 +3,7 @@
 open FParsec
 open Xunit
 
+
 let tryParse source parser =
     match run parser source with
     | Success (result, _, position) ->
@@ -13,16 +14,19 @@ let tryParse source parser =
     | Failure (message, _, _) ->
         (None, message)
 
+
 let Parse<'r>(source: string, parser: Parser<'r, unit>) =
     let result, message = tryParse source parser
     
     Assert.True(result.IsSome, message)
-    
+
+
 let ParseEqual<'r>(source: string, parser: Parser<'r, unit>, expected: 'r) =
     let result, message = tryParse source parser
     match result with
     | Some actual -> Assert.Equal(expected, actual)
     | None -> Assert.True(false, message)
+
 
 let NotParse<'r>(source: string, parser: Parser<'r, unit>) =
     let result, message = tryParse source parser

@@ -9,8 +9,8 @@
         <Compile Include="StringParsers.fs" />
         <Compile Include="Proto3.fs" />
         <Compile Include="Proto3Parser.fs" />
-        <Compile Include="TextFormat.fs" />
-        <Compile Include="TextFormatParser.fs" />
+        <Compile Include="Textproto.fs" />
+        <Compile Include="TextprotoParser.fs" />
         <Compile Include="Validators.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>

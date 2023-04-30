@@ -6,14 +6,16 @@ open Proto3Parser
 
 let println (s: string) = Console.WriteLine(s)
 
-printfn "protoserdes s <proto3> [--input=<file>] [--output=<file>]"
-printfn "protoserdes d <proto3> [--input=<file>] [--output=<file>]"
-printfn "protoserdes --help"
-printfn ""
-printfn "s, ser, serialize -- serialize text input to binary output"
-printfn "d, des, deserialize -- deserialize binary input to text output"
-printfn "<proto3> is a description of a message."
-printfn "-i=file, --input=file -- input <file>. If missed, stdin used."
-printfn "-o=file, --output=file -- output <file>. If missed, stdout used."
-printfn ""
-printfn "-h, --help -- print this help."
+
+println "protoc <proto3> --bin [--input=<file>] [--output=<file>]"
+println "protoc <proto3> --text [--input=<file>] [--output=<file>]"
+println "protoc [--help]"
+println ""
+println "--bin, -b    -- serialize text input to binary output"
+println "--text, -t d -- deserialize binary input to text output"
+println "<proto3> is the description of the message."
+println ""
+println "-i=file, --input=file  -- input <file>, if missed, stdin used"
+println "-o=file, --output=file -- output <file>, if missed, stdout used"
+println ""
+println "-h, --help   -- print this help."
