@@ -28,7 +28,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\ProtoC\ProtoC.fsproj" />
+      <ProjectReference Include="..\ProtoS\ProtoS.fsproj" />
     </ItemGroup>
 
 </Project>
