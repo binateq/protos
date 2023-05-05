@@ -1,3 +1,3 @@
-# PROTOcol buffer Converter
+# PROTObuf Serializer and deserealizer
 
-The **protoc** utility can convert binary data to text and vice versa.
+The **protos** utility can convert binary data to **.textproto** format and vice versa.
