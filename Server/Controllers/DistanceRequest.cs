@@ -2,9 +2,9 @@
 
 public class DistanceRequest
 {
-    public Point From { get; set; }
+    public Point From { get; init; }
     
-    public Point To { get; set; }
+    public Point To { get; init; }
     
     public CalculationMethod? Method { get; set; }
 }
