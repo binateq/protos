@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+option csharp_namespace = "Server";
+
+package geo;
+
+service Geo {
+  rpc GetDistance (DistanceRequest) returns (DistanceReply);
+}
+
+// The request message containing the user's name.
+message DistanceRequest {
+  Point from = 1;
+  Point to = 2;
+  optional CalculationMethod method = 3;
+}
+
+message Point {
+  double latitude = 1;
+  double longitude = 2;
+}
+
+enum CalculationMethod {
+    COSINE = 0;
+    HAVERSINE = 1;
+}
+
+// The response message containing the greetings.
+message DistanceReply {
+  double result = 1;
+}

@@ -1,0 +1,1 @@
+﻿curl -X POST -H "Content-Type: application/json" -d @msk-spb.json http://localhost:5001/Geo/distance

@@ -4,6 +4,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ProtoS", "ProtoS\ProtoS.fsp
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ProtoS.Tests", "ProtoS.Tests\ProtoS.Tests.fsproj", "{BFE56327-89A0-4B51-B60E-7F7C8C233B4D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Server", "Server\Server.csproj", "{0214C2BF-C78E-477E-A1E4-E6F58812CFF4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{BFE56327-89A0-4B51-B60E-7F7C8C233B4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BFE56327-89A0-4B51-B60E-7F7C8C233B4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BFE56327-89A0-4B51-B60E-7F7C8C233B4D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0214C2BF-C78E-477E-A1E4-E6F58812CFF4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0214C2BF-C78E-477E-A1E4-E6F58812CFF4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0214C2BF-C78E-477E-A1E4-E6F58812CFF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0214C2BF-C78E-477E-A1E4-E6F58812CFF4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
