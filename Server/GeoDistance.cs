@@ -12,12 +12,12 @@ public static class GeoDistance
     {
         var phi1 = ToRadians(latitudeFrom);
         var phi2 = ToRadians(latitudeTo);
-        var deltaLambda = ToRadians(latitudeFrom - latitudeTo);
+        var deltaLambda = ToRadians(longitudeTo - longitudeFrom);
 
-        var cos = Math.Sin(phi1) * Math.Sin(phi2) +
+        var angularDistanceCosine = Math.Sin(phi1) * Math.Sin(phi2) +
                   Math.Cos(phi1) * Math.Cos(phi2) * Math.Cos(deltaLambda);
         
-        return Radius * Math.Acos(cos);
+        return Radius * Math.Acos(angularDistanceCosine);
     }
 
     public static double GetByHaversines(double latitudeFrom, double longitudeFrom,
@@ -26,12 +26,12 @@ public static class GeoDistance
         var phi1 = ToRadians(latitudeFrom);
         var phi2 = ToRadians(latitudeTo);
         var deltaPhi = phi2 - phi1;
-        var deltaLambda = ToRadians(latitudeFrom - latitudeTo);
+        var deltaLambda = ToRadians(longitudeTo - longitudeFrom);
 
-        var tan = Square(Math.Sin(deltaPhi / 2)) +
+        var haversine = Square(Math.Sin(deltaPhi / 2)) +
                   Math.Cos(phi1) * Math.Cos(phi2) *
                   Square(Math.Sin(deltaLambda / 2));
 
-        return Radius * Math.Atan2(Math.Sqrt(tan), Math.Sqrt(1 - tan));
+        return 2 * Radius * Math.Atan2(Math.Sqrt(haversine), Math.Sqrt(1 - haversine));
     }
 }
