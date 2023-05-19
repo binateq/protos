@@ -11,7 +11,7 @@
         <Compile Include="Assert.fs" />
         <Compile Include="Proto3ParserTests.fs" />
         <Compile Include="TextprotoParserTests.fs" />
-        <Compile Include="ValidatorsTests.fs" />
+        <Compile Include="ASGTests.fs" />
     </ItemGroup>
 
     <ItemGroup>

@@ -7,9 +7,9 @@ open Proto3Parser
 let println (s: string) = Console.WriteLine(s)
 
 
-println "protoc <proto3> --bin [--input=<file>] [--output=<file>]"
-println "protoc <proto3> --text [--input=<file>] [--output=<file>]"
-println "protoc [--help]"
+println "protos <proto3> --bin [--input=<file>] [--output=<file>]"
+println "protos <proto3> --text [--input=<file>] [--output=<file>]"
+println "protos [--help]"
 println ""
 println "--bin, -b    -- serialize text input to binary output"
 println "--text, -t d -- deserialize binary input to text output"

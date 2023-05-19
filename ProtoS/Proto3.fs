@@ -18,17 +18,15 @@ type Constant =
     | Bool of bool
 
 
-type Option = {
-    name: OptionName
-    value: Constant
-}
+type Option =
+  { name: OptionName
+    value: Constant }
 
 
-type EnumField = {
-    name: EnumFieldName
+type EnumField =
+  { name: EnumFieldName
     value: EnumValue
-    options: Option list option
-}
+    options: Option list option }
 
 
 type EnumItem =
@@ -37,10 +35,9 @@ type EnumItem =
     | EnumEmptyItem
 
 
-type Enum = {
-    name: EnumName
-    items: EnumItem list
-}
+type Enum =
+  { name: EnumName
+    items: EnumItem list }
 
 
 type MessageName = MessageName of string
@@ -69,13 +66,12 @@ type MessageFieldType =
 type MessageFieldNumber = MessageFieldNumber of uint32
 
 
-type MessageField = {
-    repeated: bool
+type MessageField =
+  { repeated: bool
     name: MessageFieldName
     fieldType: MessageFieldType
     number: MessageFieldNumber
-    options: Option list option
-}
+    options: Option list option }
 
    
 type MessageItem =
@@ -84,10 +80,9 @@ type MessageItem =
     | MessageMessage of Message
     | MessageOption of Option
     | MessageEmptyItem
-and Message = {
-    name: MessageName
-    items: MessageItem list
-}
+and Message =
+  { name: MessageName
+    items: MessageItem list }
 
 
 type Package = Package of string

@@ -6,12 +6,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="StringParsers.fs" />
         <Compile Include="Proto3.fs" />
         <Compile Include="Proto3Parser.fs" />
         <Compile Include="Textproto.fs" />
         <Compile Include="TextprotoParser.fs" />
-        <Compile Include="Validators.fs" />
+        <Compile Include="ASG.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 
