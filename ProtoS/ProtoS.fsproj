@@ -10,7 +10,7 @@
         <Compile Include="Proto3Parser.fs" />
         <Compile Include="Textproto.fs" />
         <Compile Include="TextprotoParser.fs" />
-        <Compile Include="ASG.fs" />
+        <Compile Include="Transformers.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 
