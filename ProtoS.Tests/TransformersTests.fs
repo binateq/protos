@@ -1,4 +1,4 @@
-﻿module ASGTests
+﻿module TransformersTests
 
 open Xunit
 open Proto3
@@ -46,7 +46,7 @@ module ``isFieldNumberValid should`` =
 
 module ``transformEnum should`` =
     [<Fact>]
-    let ``change State correctly`` =
+    let ``change Schema correctly`` () =
         let enum =
           { Enum.name = EnumName "foo"
             items =
@@ -66,14 +66,14 @@ module ``transformEnum should`` =
                   { name = EnumFieldName "quux"
                     value = EnumValue 444
                     options = None } ] }
-        let fields =
-            seq
-              { "bar", 111
-                "baz", 222
-                "quux", 444 } |> Map
         let expected =
             seq
-              { "foo", fields } |> Map
-        let actual = (transformEnum State.start enum).enums      
+              { "foo", seq
+                          { "bar", 111
+                            "baz", 222
+                            "quux", 444 }
+                          |> Map }
+              |> Map
+        let actual = (transformEnum Schema.start enum).enums      
         
         Assert.Equal<Map<string, Map<string, int>>>(expected, actual)

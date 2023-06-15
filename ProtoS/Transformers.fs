@@ -5,6 +5,10 @@ open Proto3
 type Schema =
   { messages: Map<string, MessageField array>
     enums: Map<string, Map<string, int32>> }
+  
+    static member start =
+    { messages = Map.empty
+      enums =  Map.empty }
 
 
 let isFieldNumberValid (MessageFieldNumber n) =
@@ -18,7 +22,8 @@ let transformMessage (state: Schema) (message: Message) =
             Some field
         | _ -> None
         
-    let items = message.items
+    let items =
+        message.items
         |> List.choose chooser
         |> List.sortBy (fun x -> x.number)
         |> List.toArray
