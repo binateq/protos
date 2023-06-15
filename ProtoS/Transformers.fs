@@ -7,8 +7,8 @@ type Schema =
     enums: Map<string, Map<string, int32>> }
   
     static member start =
-    { messages = Map.empty
-      enums =  Map.empty }
+      { messages = Map.empty
+        enums =  Map.empty }
 
 
 let isFieldNumberValid (MessageFieldNumber n) =
