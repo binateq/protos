@@ -10,7 +10,7 @@ let tryParse source parser =
         if position.Index = source.Length then
             (Some result, sprintf $"%A{result}")
         else
-            (None, "Is not parsed til the end")
+            (None, "The pattern is not parsed til the end")
     | Failure (message, _, _) ->
         (None, message)
 
