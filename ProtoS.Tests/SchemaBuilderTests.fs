@@ -35,7 +35,7 @@ module ``buildMessage should`` =
           
         let expected =
           ( "foo",
-            [|
+            [
               { repeated = false
                 fieldType = String 
                 name = MessageFieldName "quxx"
@@ -50,7 +50,7 @@ module ``buildMessage should`` =
                 fieldType = Int32 
                 name = MessageFieldName "bar"
                 number = MessageFieldNumber 2u
-                options = None } |] )
+                options = None } ] )
               
         let actual = buildMessage message      
         

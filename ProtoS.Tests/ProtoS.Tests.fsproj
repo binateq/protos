@@ -12,6 +12,7 @@
         <Compile Include="Proto3ParserTests.fs" />
         <Compile Include="TextprotoParserTests.fs" />
         <Compile Include="SchemaBuilderTests.fs" />
+        <Compile Include="SerdeTests.fs" />
     </ItemGroup>
 
     <ItemGroup>
