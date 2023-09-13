@@ -83,9 +83,7 @@ module ``serializeString should`` =
         use stream = new MemoryStream()
         serializeString "testing" stream
         
-        let expected =
-            [| 0x07uy; 0x74uy; 0x65uy; 0x73uy
-               0x74uy; 0x69uy; 0x6euy; 0x67uy |]
+        let expected = [| 0x07uy; 't'B; 'e'B; 's'B; 't'B; 'i'B; 'n'B; 'g'B |]
             
         Assert.Equal<byte array>(expected, stream.ToArray())
 
