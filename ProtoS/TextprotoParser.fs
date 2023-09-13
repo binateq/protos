@@ -98,14 +98,14 @@ let stringValue = many1Strings (stringLiteral .>> skipSpaces)
 let scalarValue =
     choice
       [ stringValue |>> ScalarValue.String
-        attempt floatLiteral |>> ScalarValue.Float
-        attempt (skipCharSpaces '-' >>. floatLiteral) |>> (((+) "-") >> ScalarValue.Float)
+        attempt floatLiteral |>> float |>> ScalarValue.Float
+        attempt (skipCharSpaces '-' >>. floatLiteral) |>> (((+) "-") >> float >> ScalarValue.Float)
         identifier |>> ScalarValue.Identifier
         attempt (skipCharSpaces '-' >>. identifier) |>> ScalarValue.SignedIdentifier
-        attempt (skipCharSpaces '-' >>. decimalLiteral) |>> ScalarValue.DecSignedInteger
+        attempt (skipCharSpaces '-' >>. decimalLiteral) |>> (int64 >> (~-)) |>> ScalarValue.SignedInteger
         //attempt (pchar '-' >>. skipSpaces >>. octalInteger) |>> ((~-) >> ScalarValue.OctSignedInteger)
         //attempt (pchar '-' >>. skipSpaces >>. hexadecimalInteger) |>> ((~-) >> ScalarValue.HexSignedInteger)
-        attempt decimalLiteral |>> ScalarValue.DecUnsignedInteger
+        attempt decimalLiteral |>> uint64 |>> ScalarValue.UnsignedInteger
         //attempt octalInteger |>> (uint64 >> ScalarValue.OctUnsignedInteger)
         //hexadecimalInteger |>> (uint64 >> ScalarValue.HexUnsignedInteger)
       ] .>> skipSpaces

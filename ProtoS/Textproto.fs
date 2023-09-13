@@ -4,19 +4,21 @@ type FieldName =
     | Extension of string
     | Any of string * string
     | Identifier of string
+    
+    member this.asString =
+        match this with
+        | Extension name -> name
+        | Any (domain, name) -> domain + "/" + name
+        | Identifier name -> name
 
 
 type ScalarValue =
     | String of string
-    | Float of string
+    | Float of double
     | Identifier of string
     | SignedIdentifier of string
-    | DecSignedInteger of string
-    | OctSignedInteger of string
-    | HexSignedInteger of string
-    | DecUnsignedInteger of string
-    | OctUnsignedInteger of string
-    | HexUnsignedInteger of string
+    | SignedInteger of int64
+    | UnsignedInteger of uint64
 
 
 type ScalarFieldValue =

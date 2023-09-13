@@ -117,14 +117,14 @@ let ``stringValue parses a few strings`` () =
 [<Fact>]
 let ``scalarValue parses scalar values`` () =
     Assert.ParseEqual("'abc' 'def''ghi'", scalarValue, ScalarValue.String "abcdefghi")
-    Assert.ParseEqual("-#comment\n.5", scalarValue, ScalarValue.Float "-.5")
-    Assert.ParseEqual(".5", scalarValue, ScalarValue.Float ".5")
+    Assert.ParseEqual("-#comment\n.5", scalarValue, ScalarValue.Float -0.5)
+    Assert.ParseEqual(".5", scalarValue, ScalarValue.Float 0.5)
     Assert.ParseEqual("inf", scalarValue, ScalarValue.Identifier "inf")
     Assert.ParseEqual("-inf", scalarValue, ScalarValue.SignedIdentifier "inf")
-    Assert.ParseEqual("123", scalarValue, ScalarValue.DecUnsignedInteger "123")
+    Assert.ParseEqual("123", scalarValue, ScalarValue.UnsignedInteger 123uL)
     //Assert.ParseEqual("0123", scalarValue, ScalarValue.OctUnsignedInteger 0o123UL)
     //Assert.ParseEqual("0x123", scalarValue, ScalarValue.HexUnsignedInteger 0x123UL)
-    Assert.ParseEqual("-123", scalarValue, ScalarValue.DecSignedInteger "123")
+    Assert.ParseEqual("-123", scalarValue, ScalarValue.SignedInteger -123L)
     //Assert.ParseEqual("-0123", scalarValue, ScalarValue.OctSignedInteger -0o123L)
     //Assert.ParseEqual("-0x123", scalarValue, ScalarValue.HexSignedInteger -0x123L)
 
@@ -139,7 +139,7 @@ let ``fieldName parses extension, any and identifier`` () =
 [<Fact>]
 let ``scalarList parses scalar values list`` () =
     let expected = [
-        ScalarValue.DecUnsignedInteger "1"
+        ScalarValue.UnsignedInteger 1uL
         ScalarValue.String "abc"
         ScalarValue.SignedIdentifier "def"
     ]
@@ -150,11 +150,11 @@ let ``scalarList parses scalar values list`` () =
 let ``scalarField parses scalar fields`` () =
     Assert.ParseEqual("foo: 10", scalarField, {
         ScalarField.name = FieldName.Identifier "foo"
-        value = ScalarFieldValue.ScalarValue (DecUnsignedInteger "10")
+        value = ScalarFieldValue.ScalarValue (UnsignedInteger 10uL)
     })
     Assert.ParseEqual("[foo.bar] : [10, 20]", scalarField, {
         ScalarField.name = FieldName. Extension "foo.bar"
-        value = ScalarFieldValue.ScalarList [DecUnsignedInteger "10"; DecUnsignedInteger "20"]
+        value = ScalarFieldValue.ScalarList [UnsignedInteger 10uL; UnsignedInteger 20uL]
     })
 
     
@@ -164,17 +164,17 @@ let ``messageField parses message fields`` () =
         MessageField.name = FieldName.Identifier "foo"
         value = MessageValue (Message [
     ScalarField { name = FieldName.Identifier "bar"
-                  value = ScalarFieldValue.ScalarValue (DecUnsignedInteger "10") };
+                  value = ScalarFieldValue.ScalarValue (UnsignedInteger 10uL) };
     ScalarField { name = FieldName.Identifier "baz"
-                  value = ScalarFieldValue.ScalarValue (DecUnsignedInteger "20") } ])
+                  value = ScalarFieldValue.ScalarValue (UnsignedInteger 20uL) } ])
     })
     Assert.ParseEqual("foo : <bar: 10, baz: 20;>", messageField, {
         MessageField.name = FieldName.Identifier "foo"
         value = MessageValue (Message [
     ScalarField { name = FieldName.Identifier "bar"
-                  value = ScalarFieldValue.ScalarValue (DecUnsignedInteger "10") };
+                  value = ScalarFieldValue.ScalarValue (UnsignedInteger 10uL) };
     ScalarField { name = FieldName.Identifier "baz"
-                  value = ScalarFieldValue.ScalarValue (DecUnsignedInteger "20") } ])
+                  value = ScalarFieldValue.ScalarValue (UnsignedInteger 20uL) } ])
     })
 
 
@@ -217,7 +217,7 @@ repeated_values: [ "one", "two", "three" ]
                     value = ScalarValue (String "Fluffy") }
                 ScalarField {
                     name = FieldName.Identifier "tail_wagginess"
-                    value = ScalarValue (Float "0.65") }]) }
+                    value = ScalarValue (Float 0.65) }]) }
         MessageField {
             name = FieldName.Identifier "pet"
             value = MessageValue (Message [
@@ -229,7 +229,7 @@ repeated_values: [ "one", "two", "three" ]
                     value = ScalarValue (String "Lizzy") }
                 ScalarField {
                     name = FieldName.Identifier "legs"
-                    value = ScalarValue (DecUnsignedInteger "4") }]) }
+                    value = ScalarValue (UnsignedInteger 4uL) }]) }
         ScalarField {
             name = FieldName.Identifier "string_value_with_escape"
             value = ScalarValue (String "valid \n escape") }

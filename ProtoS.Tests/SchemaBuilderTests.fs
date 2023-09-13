@@ -14,7 +14,7 @@ module ``buildMessage should`` =
                   { repeated = false
                     fieldType = Int32 
                     name = MessageFieldName "bar"
-                    number = MessageFieldNumber 2u
+                    number = MessageFieldNumber 4u
                     options = None }
                 MessageEmptyItem
                 MessageOption
@@ -24,33 +24,36 @@ module ``buildMessage should`` =
                   { repeated = false
                     fieldType = Float
                     name = MessageFieldName "qux"
-                    number = MessageFieldNumber 1u
+                    number = MessageFieldNumber 2u
                     options = None }
                 MessageField
                   { repeated = false
                     fieldType = String 
                     name = MessageFieldName "quxx"
-                    number = MessageFieldNumber 0u
+                    number = MessageFieldNumber 1u
                     options = None } ] }
           
         let expected =
           ( "foo",
-            [
-              { repeated = false
-                fieldType = String 
-                name = MessageFieldName "quxx"
-                number = MessageFieldNumber 0u
-                options = None }
-              { repeated = false
-                fieldType = Float 
-                name = MessageFieldName "qux"
-                number = MessageFieldNumber 1u
-                options = None }
-              { repeated = false
-                fieldType = Int32 
-                name = MessageFieldName "bar"
-                number = MessageFieldNumber 2u
-                options = None } ] )
+            Map
+              [ "quxx",
+                { repeated = false
+                  fieldType = String 
+                  name = MessageFieldName "quxx"
+                  number = MessageFieldNumber 1u
+                  options = None }
+                "qux",
+                { repeated = false
+                  fieldType = Float 
+                  name = MessageFieldName "qux"
+                  number = MessageFieldNumber 2u
+                  options = None }
+                "bar",
+                { repeated = false
+                  fieldType = Int32 
+                  name = MessageFieldName "bar"
+                  number = MessageFieldNumber 4u
+                  options = None } ] )
               
         let actual = buildMessage message      
         

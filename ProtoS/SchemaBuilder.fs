@@ -6,13 +6,14 @@ let buildMessage (message: Message) =
     let (MessageName name) = message.name
     let chooser = function
         | MessageField field ->
-            Some field
+            let (MessageFieldName name) = field.name
+            Some (name, field)
         | _ -> None
     
     let fields =
         message.items
         |> List.choose chooser
-        |> List.sortBy (fun x -> x.number)
+        |> Map
         
     (name, fields)
 
@@ -35,7 +36,7 @@ let buildEnum (enum: Enum) =
 
 
 type Schema =
-  { messages: Map<string, MessageField list>
+  { messages: Map<string, Map<string, MessageField>>
     enums: Map<string, Map<string, int32>> }
       
       
