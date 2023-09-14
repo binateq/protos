@@ -66,8 +66,10 @@ type MessageFieldType =
 type MessageFieldNumber = MessageFieldNumber of uint32
 
 
+type Modifier = Repeated | Optional
+
 type MessageField =
-  { repeated: bool
+  { modifier: Modifier option
     name: MessageFieldName
     fieldType: MessageFieldType
     number: MessageFieldNumber

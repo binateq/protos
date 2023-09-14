@@ -273,7 +273,7 @@ let ``"enum Foo { option alias = 'Bar'; UNKNOWN = 0; KNOWN = 1; }" is EnumDefini
     
 [<Fact>]
 let ``"string login = 1 [packed=true];" is MessageField`` () =
-    let expected = { repeated = false
+    let expected = { modifier = None
                      name = MessageFieldName "login"
                      fieldType = String
                      number = MessageFieldNumber 1u
@@ -284,7 +284,7 @@ let ``"string login = 1 [packed=true];" is MessageField`` () =
     
 [<Fact>]
 let ``"repeated MailAddress cc = 3;" is MessageField`` () =
-    let expected = { repeated = true
+    let expected = { modifier = Some Repeated
                      name = MessageFieldName "cc"
                      fieldType = MessageFieldType.Reference "MailAddress"
                      number = MessageFieldNumber 3u
@@ -295,12 +295,12 @@ let ``"repeated MailAddress cc = 3;" is MessageField`` () =
 [<Fact>]
 let ``"message MailRequest { User user = 1; Mail mail = 2; }" is MessageDefinition`` () =
     let expected = { Message.name = MessageName "MailRequest"
-                     items = [ MessageField { repeated = false
+                     items = [ MessageField { modifier = None
                                               name = MessageFieldName "user"
                                               fieldType = Reference "User" 
                                               number = MessageFieldNumber 1u
                                               options = None }
-                               MessageField { repeated = false
+                               MessageField { modifier = None
                                               name = MessageFieldName "mail"
                                               fieldType = Reference "Mail"
                                               number = MessageFieldNumber 2u
@@ -311,12 +311,12 @@ let ``"message MailRequest { User user = 1; Mail mail = 2; }" is MessageDefiniti
 [<Fact>]
 let ``"message User { string login = 1; int64 uid = 2;}" is MessageDefinition`` () =
     let expected = { Message.name = MessageName "User"
-                     items = [ MessageField { repeated = false
+                     items = [ MessageField { modifier = None
                                               name = MessageFieldName "login"
                                               fieldType = String 
                                               number = MessageFieldNumber 1u
                                               options = None }
-                               MessageField { repeated = false
+                               MessageField { modifier = None
                                               name = MessageFieldName "uid"
                                               fieldType = Int64
                                               number = MessageFieldNumber 2u
@@ -383,14 +383,14 @@ message File {
             name = MessageName "MailRequest"
             items = [
                 MessageField {
-                    repeated = false
+                    modifier = None
                     name = MessageFieldName "user"
                     fieldType = Reference "User" 
                     number = MessageFieldNumber 1u
                     options = None
                 }
                 MessageField {
-                    repeated = false
+                    modifier = None
                     name = MessageFieldName "mail"
                     fieldType = Reference "Mail"
                     number = MessageFieldNumber 2u
@@ -399,91 +399,91 @@ message File {
             ]
         }
         ProtoMessage { name = MessageName "User"
-                       items = [ MessageField { repeated = false
+                       items = [ MessageField { modifier = None
                                                 name = MessageFieldName "login"
                                                 fieldType = String 
                                                 number = MessageFieldNumber 1u
                                                 options = None }
-                                 MessageField { repeated = false
+                                 MessageField { modifier = None
                                                 name = MessageFieldName "uid"
                                                 fieldType = Int64
                                                 number = MessageFieldNumber 2u
                                                 options = None } ] }
         ProtoMessage { name = MessageName "Mail"
-                       items = [ MessageField { repeated = false
+                       items = [ MessageField { modifier = None
                                                 name = MessageFieldName "from"
                                                 fieldType = Reference "MailAddress"
                                                 number = MessageFieldNumber 1u
                                                 options = None }
-                                 MessageField { repeated = true
+                                 MessageField { modifier = Some Repeated
                                                 name = MessageFieldName "to"
                                                 fieldType = Reference "MailAddress"
                                                 number = MessageFieldNumber 2u
                                                 options = None }
-                                 MessageField { repeated = true
+                                 MessageField { modifier = Some Repeated
                                                 name = MessageFieldName "cc"
                                                 fieldType = Reference "MailAddress"
                                                 number = MessageFieldNumber 3u
                                                 options = None }
-                                 MessageField { repeated = false
+                                 MessageField { modifier = None
                                                 name = MessageFieldName "subject"
                                                 fieldType = String
                                                 number = MessageFieldNumber 4u
                                                 options = None }
-                                 MessageField { repeated = false
+                                 MessageField { modifier = None
                                                 name = MessageFieldName "text"
                                                 fieldType = String
                                                 number = MessageFieldNumber 5u
                                                 options = None }
-                                 MessageField { repeated = false
+                                 MessageField { modifier = None
                                                 name = MessageFieldName "is_text_html"
                                                 fieldType = Bool
                                                 number = MessageFieldNumber 6u
                                                 options = None }
-                                 MessageField { repeated = false
+                                 MessageField { modifier = None
                                                 name = MessageFieldName "time"
                                                 fieldType = Reference "google.protobuf.Timestamp"
                                                 number = MessageFieldNumber 7u
                                                 options = None }
-                                 MessageField { repeated = true
+                                 MessageField { modifier = Some Repeated
                                                 name = MessageFieldName "headers"
                                                 fieldType = Reference "MailHeader"
                                                 number = MessageFieldNumber 8u
                                                 options = None }
-                                 MessageField { repeated = true
+                                 MessageField { modifier = Some Repeated
                                                 name = MessageFieldName "files"
                                                 fieldType = Reference "File"
                                                 number = MessageFieldNumber 9u
                                                 options = None } ] }
         ProtoMessage { name = MessageName "MailAddress"
-                       items = [ MessageField { repeated = false
+                       items = [ MessageField { modifier = None
                                                 name = MessageFieldName "email"
                                                 fieldType = String 
                                                 number = MessageFieldNumber 1u
                                                 options = None }
-                                 MessageField { repeated = false
+                                 MessageField { modifier = None
                                                 name = MessageFieldName "display_name"
                                                 fieldType = String
                                                 number = MessageFieldNumber 2u
                                                 options = None } ] }
         ProtoMessage { name = MessageName "MailHeader"
-                       items = [ MessageField { repeated = false
+                       items = [ MessageField { modifier = None
                                                 name = MessageFieldName "name"
                                                 fieldType = String 
                                                 number = MessageFieldNumber 1u
                                                 options = None }
-                                 MessageField { repeated = false
+                                 MessageField { modifier = None
                                                 name = MessageFieldName "value"
                                                 fieldType = String
                                                 number = MessageFieldNumber 2u
                                                 options = None } ] }
         ProtoMessage { name = MessageName "File"
-                       items = [ MessageField { repeated = false
+                       items = [ MessageField { modifier = None
                                                 name = MessageFieldName "name"
                                                 fieldType = String 
                                                 number = MessageFieldNumber 1u
                                                 options = None }
-                                 MessageField { repeated = false
+                                 MessageField { modifier = None
                                                 name = MessageFieldName "url_path"
                                                 fieldType = String
                                                 number = MessageFieldNumber 2u

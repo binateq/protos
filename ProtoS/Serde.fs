@@ -64,7 +64,7 @@ let serializeSInt64 (value: int64) stream =
 let serializeDouble (value: float) (stream: Stream) =
     let mutable bytes = BitConverter.GetBytes(value)
     if not BitConverter.IsLittleEndian
-        then Array.Reverse(bytes)
+    then Array.Reverse(bytes)
         
     stream.Write(bytes)
 
@@ -72,7 +72,7 @@ let serializeDouble (value: float) (stream: Stream) =
 let serializeFloat (value: float32) (stream: Stream) =
     let mutable bytes = BitConverter.GetBytes(value)
     if not BitConverter.IsLittleEndian
-        then Array.Reverse(bytes)
+    then Array.Reverse(bytes)
         
     stream.Write(bytes)
     
@@ -80,7 +80,7 @@ let serializeFloat (value: float32) (stream: Stream) =
 let serializeFixed32 (value: uint32) (stream: Stream) =
     let mutable bytes = BitConverter.GetBytes(value)
     if not BitConverter.IsLittleEndian
-        then Array.Reverse(bytes)
+    then Array.Reverse(bytes)
         
     stream.Write(bytes)
     
@@ -88,7 +88,7 @@ let serializeFixed32 (value: uint32) (stream: Stream) =
 let serializeFixed64 (value: uint64) (stream: Stream) =
     let mutable bytes = BitConverter.GetBytes(value)
     if not BitConverter.IsLittleEndian
-        then Array.Reverse(bytes)
+    then Array.Reverse(bytes)
         
     stream.Write(bytes)
     
@@ -175,10 +175,6 @@ let serializeScalarValue (messageField: Proto3.MessageField) (value: ScalarValue
     | Reference _, _ ->
         invalidArg "Message can't be serialized as scalar value" (nameof messageField.fieldType)
 
-
-let serializeScalarList (messageField: Proto3.MessageField) (values: ScalarValue list) (stream: Stream) =
-    raise (new NotImplementedException("serializeScalarList"))
-        
         
 let rec serializeMessage (messageName: string) (fields: Field list) (schema: Schema) (stream: Stream) =
     let descriptors = schema.messages[messageName] 

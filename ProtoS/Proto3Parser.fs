@@ -142,19 +142,19 @@ let enumDefinition =
 
 
 let messageField =
-    let make repeated fieldType name number options =
-      { repeated = repeated
+    let make modifier fieldType name number options =
+      { modifier = modifier
         name = name
         fieldType = fieldType
         number = number
         options = options }
-    let repeated = (skipString "repeated" .>> spaces1 |>> fun _ -> true) <|>% false
+    let modifier = opt ((stringReturn "repeated" Repeated <|> stringReturn "optional" Optional) .>> spaces1)
     let fieldType = fieldType .>> spaces1
     let fieldName = identifier .>> spaces .>> skipChar '=' .>> spaces |>> MessageFieldName
     let fieldNumber = puint32 .>> spaces |>> MessageFieldNumber
     let options = options .>> spaces .>> skipString ";" .>> spaces 
 
-    pipe5 repeated fieldType fieldName fieldNumber options make
+    pipe5 modifier fieldType fieldName fieldNumber options make
 
 
 let messageDefinition, implementation = createParserForwardedToRef()

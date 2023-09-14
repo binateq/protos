@@ -11,7 +11,7 @@ module ``buildMessage should`` =
           { Message.name = MessageName "foo"
             items =
               [ MessageField
-                  { repeated = false
+                  { modifier = None
                     fieldType = Int32 
                     name = MessageFieldName "bar"
                     number = MessageFieldNumber 4u
@@ -21,13 +21,13 @@ module ``buildMessage should`` =
                   { name = SimpleName "baz"
                     value = Integer 0 }
                 MessageField
-                  { repeated = false
+                  { modifier = None
                     fieldType = Float
                     name = MessageFieldName "qux"
                     number = MessageFieldNumber 2u
                     options = None }
                 MessageField
-                  { repeated = false
+                  { modifier = None
                     fieldType = String 
                     name = MessageFieldName "quxx"
                     number = MessageFieldNumber 1u
@@ -37,19 +37,19 @@ module ``buildMessage should`` =
           ( "foo",
             Map
               [ "quxx",
-                { repeated = false
+                { modifier = None
                   fieldType = String 
                   name = MessageFieldName "quxx"
                   number = MessageFieldNumber 1u
                   options = None }
                 "qux",
-                { repeated = false
+                { modifier = None
                   fieldType = Float 
                   name = MessageFieldName "qux"
                   number = MessageFieldNumber 2u
                   options = None }
                 "bar",
-                { repeated = false
+                { modifier = None
                   fieldType = Int32 
                   name = MessageFieldName "bar"
                   number = MessageFieldNumber 4u
@@ -93,5 +93,3 @@ module ``buildEnum should`` =
         let actual = buildEnum enum      
         
         Assert.Equal(expected, actual)
-
-
