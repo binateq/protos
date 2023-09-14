@@ -3,8 +3,7 @@
 open FParsec
 open Xunit
 
-
-let tryParse source parser =
+let private tryParse source parser =
     match run parser source with
     | Success (result, _, position) ->
         if position.Index = source.Length then
