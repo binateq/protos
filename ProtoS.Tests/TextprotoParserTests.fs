@@ -92,20 +92,14 @@ let ``floatLiteral parses 123e100, 123.E+100, 123.e-100`` () =
 
 
 [<Fact>]
-let ``hexadecimalInteger parses 0x123, 0X0`` () =
-    Assert.ParseEqual("0x123", hexadecimalInteger, "123")
-    Assert.ParseEqual("0X0", hexadecimalInteger, "0")
-
-    
-[<Fact>]
 let ``stringLiteral parses valid strings`` () =
     Assert.ParseEqual("""'abfnrtv\a\b\f\n\r\t\v'""", stringLiteral, "abfnrtv\a\b\f\n\r\t\v")
     Assert.ParseEqual("""'\?"\"\''""", stringLiteral, "?\"\"\'")
     Assert.ParseEqual("""'\123'""", stringLiteral, "S")
     Assert.ParseEqual("""'\x23'""", stringLiteral, "\x23")
     Assert.ParseEqual("""'\u12345'""", stringLiteral, "\u12345")
-    //Assert.ParseEqual("""'\U00012345'""", stringLiteral, "\U00012345")
-    //Assert.ParseEqual("""'\U00101234'""", stringLiteral, "\U00101234")
+    Assert.ParseEqual("""'\U00012345'""", stringLiteral, "\U00012345")
+    Assert.ParseEqual("""'\U00101234'""", stringLiteral, "\U00101234")
 
 
 [<Fact>]

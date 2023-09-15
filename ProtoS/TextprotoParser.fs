@@ -59,10 +59,6 @@ let floatLiteral =
         float .>> opt f ]
 
 
-let octalLiteral: Parser<string, unit> = pchar '0' >>. (many1Chars octal)
-let hexadecimalInteger: Parser<string, unit> = pstringCI "0X" >>. (many1Chars hex)
-
-
 let stringLiteral: Parser<string, unit> =
     let charFromHex s = System.Convert.ToChar(System.Convert.ToInt32(s, 16)).ToString()
     let charFromOct s = System.Convert.ToChar(System.Convert.ToInt32(s, 8)).ToString()
@@ -84,7 +80,7 @@ let stringLiteral: Parser<string, unit> =
             pstring "\\x" >>. manyMinMaxSatisfy 1 2 isHex |>> charFromHex
             pstring "\\u" >>. manyMinMaxSatisfy 4 4 isHex |>> charFromHex
             pstring "\\U000" >>. manyMinMaxSatisfy 5 5 isHex |>> charFromLargeHex
-            pstring "\\U0010" >>. manyMinMaxSatisfy 4 3 isHex |>> charFromLargeHex 
+            pstring "\\U0010" >>. manyMinMaxSatisfy 4 4 isHex |>> ((+) "10") |>> charFromLargeHex 
             pstring "\\" >>. manyMinMaxSatisfy 1 3 isOctal |>> charFromOct ]
 
     let singleQuoteChar = (noneOf "\0\'\n\\" |>> charToString) <|> escape

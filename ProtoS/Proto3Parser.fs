@@ -34,7 +34,7 @@ let stringLiteral =
             pstring "\\x" >>. manyMinMaxSatisfy 1 2 isHex |>> charFromHex
             pstring "\\u" >>. manyMinMaxSatisfy 4 4 isHex |>> charFromHex
             pstring "\\U000" >>. manyMinMaxSatisfy 5 5 isHex |>> charFromLargeHex
-            pstring "\\U0010" >>. manyMinMaxSatisfy 4 3 isHex |>> charFromLargeHex 
+            pstring "\\U0010" >>. manyMinMaxSatisfy 4 4 isHex |>> ((+) "10") |>> charFromLargeHex 
             pstring "\\" >>. manyMinMaxSatisfy 1 3 isOctal |>> charFromOct ]
 
     let singleQuoteChar = (noneOf "\0\'\n\\" |>> charToString) <|> escape
