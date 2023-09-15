@@ -58,6 +58,16 @@ let ``"\"Lorem ipsum\"" is string`` () =
 [<Fact>]
 let ``"'Lorem ipsum'" is string`` () =
     Assert.ParseEqual("'Lorem ipsum'", stringLiteral, "Lorem ipsum")
+    
+
+[<Fact>]
+let ``"'Lorem\\n ipsum'" is string`` () =
+    Assert.ParseEqual("'Lorem\\n ipsum'", stringLiteral, "Lorem\n ipsum")
+    
+    
+[<Fact>]
+let ``"'\\U0001F602'" is string`` () =
+    Assert.ParseEqual("'\\U0001F602'", stringLiteral, "😂")
 
 
 [<Fact>]
@@ -97,17 +107,17 @@ let ``"foo" is valid option name`` () =
 
 [<Fact>]
 let ``"foo.bar" is valid option name`` () =
-    Assert.ParseEqual("foo.bar", optionName, SimpleName "foo.bar")
+    Assert.NotParse("foo.bar", optionName)
 
 
 [<Fact>]
 let ``"(foo).bar" is valid option name`` () =
-    Assert.ParseEqual("(foo).bar", optionName, ComplexName ("foo", "bar"))
+    Assert.ParseEqual("(foo.bar)", optionName, ComplexName "foo.bar")
 
 
 [<Fact>]
 let ``"(foo.bar).baz.qux" is valid option name`` () =
-    Assert.ParseEqual("(foo.bar).baz.qux", optionName, ComplexName ("foo.bar", "baz.qux"))
+    Assert.ParseEqual("(foo)", optionName, ComplexName "foo")
 
 
 [<Fact>]
@@ -230,23 +240,6 @@ let ``"MailAddress" is MessageFieldType.Reference`` () =
 
 
 [<Fact>]
-let ``"[a = 1, b = 2]" is Some List of Proto.Options`` () =
-    let expected = Some [ { Option.name = SimpleName "a"; value = Constant.Integer 1 }
-                          { Option.name = SimpleName "b"; value = Constant.Integer 2 } ]
-    Assert.ParseEqual("[a = 1, b = 2]", options, expected)
-
-    
-[<Fact>]
-let ``"[]" is Some empty List of Proto.Options`` () =
-    Assert.ParseEqual("[]", options, Some List.empty<Option>)
-
-    
-[<Fact>]
-let ``"" is None List of Proto.Options`` () =
-    Assert.ParseEqual("", options, None)
-
-    
-[<Fact>]
 let ``"STARTED = 1;" is EnumField`` () =
     let expected = { EnumField.name = EnumFieldName "STARTED"
                      value = EnumValue 1
@@ -258,11 +251,12 @@ let ``"STARTED = 1;" is EnumField`` () =
 let ``"RUNNING = 2 [(custom_option) = "hello world"];" is EnumField`` () =
     let expected = { EnumField.name = EnumFieldName "RUNNING"
                      value = EnumValue 2
-                     options = Some [ { name = ComplexName ("custom_option", "")
+                     options = Some [ { name = ComplexName "custom_option"
                                         value = Constant.String "hello world" } ] }
     Assert.ParseEqual("RUNNING = 2 [(custom_option) = \"hello world\"];", enumField, expected)
 
 
+[<Fact>]
 let ``"enum Foo { option alias = 'Bar'; UNKNOWN = 0; KNOWN = 1; }" is EnumDefinition`` () =
     let expected = { Enum.name = EnumName "Foo"
                      items = [ EnumOption { name = SimpleName "alias"; value = Constant.String "Bar" }

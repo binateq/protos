@@ -161,6 +161,8 @@ let serializeScalarValue (messageField: Proto3.MessageField) (value: ScalarValue
         invalidOp "Bytes can't be serialized as scalar value"
     | Reference _, _ ->
         invalidOp "Message can't be serialized as scalar value"
+    | _, _ ->
+        invalidOp "Type of field is not compatible with type of data"
 
         
 let rec serializeMessage (messageName: string) (fields: Field list) (schema: Schema) (stream: Stream) =

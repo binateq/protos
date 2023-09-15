@@ -1,13 +1,12 @@
 module Proto3
 
-type EnumName = EnumName of string
-type EnumFieldName = EnumFieldName of string
-type EnumValue = EnumValue of int32
+type Package = Package of string
 
 
-type OptionName =
-    | SimpleName of string
-    | ComplexName of string * string
+type Import =
+    | Import of string
+    | WeakImport of string
+    | PublicImport of string
 
 
 type Constant =
@@ -18,9 +17,19 @@ type Constant =
     | Bool of bool
 
 
+type OptionName =
+    | SimpleName of string
+    | ComplexName of string
+
+
 type Option =
   { name: OptionName
     value: Constant }
+
+
+type EnumName = EnumName of string
+type EnumFieldName = EnumFieldName of string
+type EnumValue = EnumValue of int32
 
 
 type EnumField =
@@ -64,9 +73,8 @@ type MessageFieldType =
 
 
 type MessageFieldNumber = MessageFieldNumber of uint32
-
-
 type Modifier = Repeated | Optional
+
 
 type MessageField =
   { modifier: Modifier option
@@ -85,15 +93,6 @@ type MessageItem =
 and Message =
   { name: MessageName
     items: MessageItem list }
-
-
-type Package = Package of string
-
-
-type Import =
-    | Import of string
-    | WeakImport of string
-    | PublicImport of string
 
 
 type ProtoItem =
