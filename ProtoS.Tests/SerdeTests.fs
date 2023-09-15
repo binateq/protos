@@ -103,7 +103,7 @@ module ``serializeString should`` =
 
 module ``serializeScalarValue should`` =
     [<Fact>]
-    let ``store 0x08 0x96 0x01 for 1st Varint field with value 150`` () =
+    let ``store 0x08 0x96 0x01 for 1st Integer field with value 150`` () =
         use stream = new MemoryStream()
         let descriptor =
             { Proto3.MessageField.modifier = None
@@ -316,4 +316,24 @@ module ``deserializeString should`` =
         use stream = new MemoryStream(bytes)
 
         Assert.Equal("😂", deserializeString stream)
+        Assert.Equal(bytes.LongLength, stream.Position)
+
+
+module ``deserializeScalarValue should`` =
+    [<Fact>]
+    let ``restore "foo" field with Integer value 150 for 0x08 0x96 0x01`` () =
+        let bytes = [| 0x08uy; 0x96uy; 0x01uy |]
+        use stream = new MemoryStream(bytes)
+        let descriptors = Map [ 1u,
+                                { Proto3.MessageField.modifier = None
+                                  Proto3.MessageField.name = MessageFieldName "foo"
+                                  Proto3.MessageField.fieldType = MessageFieldType.Int32
+                                  Proto3.MessageField.number = MessageFieldNumber 1u
+                                  Proto3.MessageField.options = None } ]
+        
+        let expected =
+            { ScalarField.name = FieldName.Identifier "foo"
+              value = ScalarValue (Integer 150L) }
+        
+        Assert.Equal(expected, deserializeScalarValue descriptors stream)
         Assert.Equal(bytes.LongLength, stream.Position)

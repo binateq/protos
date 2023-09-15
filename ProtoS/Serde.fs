@@ -263,27 +263,31 @@ let deserializeString stream =
 
 let deserializeScalarValue (descriptors: Map<uint32, Proto3.MessageField>) (stream: Stream) =
     let fieldNumber, wireType = deserializeTag stream
+    let makeField value =
+        let (MessageFieldName name) = descriptors[fieldNumber].name
+        { ScalarField.name = FieldName.Identifier name
+          value = ScalarValue value }
     match descriptors[fieldNumber].fieldType, wireType with
     | Double, WireType.I64 ->
-        deserializeDouble stream |> Float
+        deserializeDouble stream |> Float |> makeField
     | MessageFieldType.Float, WireType.I32 ->
-        deserializeFloat stream |> float |> Float
+        deserializeFloat stream |> float |> Float |> makeField
     | Int32, WireType.Varint ->
-        deserializeVarint stream |> int64 |> Integer
+        deserializeVarint stream |> int64 |> Integer |> makeField
     | Int64, WireType.Varint ->
-        deserializeVarint stream |> int64 |> Integer
+        deserializeVarint stream |> int64 |> Integer |> makeField
     | SInt32, WireType.Varint ->
-        deserializeSInt32 stream |> int64 |> Integer
+        deserializeSInt32 stream |> int64 |> Integer |> makeField
     | SInt64, WireType.Varint ->
-        deserializeSInt64 stream |> Integer
+        deserializeSInt64 stream |> Integer |> makeField
     | SFixed32, WireType.I32 ->
-        deserializeFixed32 stream |> int64 |> Integer
+        deserializeFixed32 stream |> int64 |> Integer |> makeField
     | SFixed64, WireType.I64 ->
-        deserializeFixed64 stream |> int64 |> Integer
+        deserializeFixed64 stream |> int64 |> Integer |> makeField
     | Bool, WireType.Varint ->
-        if deserializeBool stream then Identifier "true" else Identifier "false" 
+        (if deserializeBool stream then Identifier "true" else Identifier "false") |> makeField 
     | MessageFieldType.String, WireType.Len ->
-        deserializeString stream |> String
+        deserializeString stream |> String |> makeField
     | Bytes, _ ->
         invalidOp "Bytes can't be serialized as scalar value"
     | Reference _, _ ->
