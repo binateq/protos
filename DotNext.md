@@ -899,3 +899,10 @@ message File {
    Get content from GitHub.
 2. Append **SchemaBuilderTests.fs** to **ProtoS.Tests** as *fourth* file
    in the project. Get content from the GitHub.
+
+## 20. Serialization
+
+1. Append **Serde.fs** to **ProtoS** as *6th* file in the project.
+   Get content from GitHub.
+2. Append **SerdeTests.fs** to **ProtoS.Tests** as *5th* file
+   in the project. Get content from the GitHub.
