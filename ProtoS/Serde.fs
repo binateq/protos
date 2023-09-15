@@ -94,8 +94,9 @@ let serializeFixed64 (value: uint64) (stream: Stream) =
     
 
 let serializeString (value: string) (stream: Stream) =
-    serializeVarint (uint64 value.Length) stream
-    stream.Write(Encoding.UTF8.GetBytes(value))
+    let bytes = Encoding.UTF8.GetBytes(value)
+    serializeVarint (uint64 bytes.Length) stream
+    stream.Write(bytes)
     
     
 let serializeSubStream (value: MemoryStream) (stream: Stream) =
@@ -196,3 +197,85 @@ let rec serializeMessage (messageName: string) (fields: Field list) (schema: Sch
 
         serializeMessage messageName tailFields schema stream
     | [] -> ()
+
+
+let deserializeVarint (stream: Stream) =
+    let rec calculateSum shift accumulator =
+        let nextByte = stream.ReadByte()
+        if nextByte = -1 then invalidOp "Unexpected end of file"
+         
+        if nextByte < 128
+        then (uint64 nextByte <<< shift) + accumulator
+        else calculateSum (shift + 7) (uint64 (nextByte - 128) <<< shift) + accumulator
+
+    calculateSum 0 0uL
+    
+    
+let deserializeTag (stream: Stream) =
+    let tag = deserializeVarint stream
+    let fieldNumber = uint32 (tag >>> 3)
+    let wireType: WireType = LanguagePrimitives.EnumOfValue (uint32 tag &&& 0x7u)
+    
+    (fieldNumber, wireType)
+    
+    
+let deserializeBool (stream: Stream) =
+    deserializeVarint stream <> 0uL
+    
+    
+let deserializeSInt32 stream =
+    let decoded = deserializeVarint stream
+    if decoded % 2uL = 0uL
+    then (decoded / 2uL) |> int32
+    else (decoded - 1uL / 2uL) |> int32 |> (~-)
+
+
+let deserializeSInt64 stream =
+    let decoded = deserializeVarint stream
+    if decoded % 2uL = 0uL
+    then (decoded / 2uL) |> int64
+    else (decoded - 1uL / 2uL) |> int64 |> (~-)
+
+
+let deserializeDouble (stream: Stream) =
+    let mutable bytes = Array.create sizeof<'float> 0uy
+    if stream.Read(bytes) < bytes.Length then invalidOp "Unexpected end of file"
+
+    if not BitConverter.IsLittleEndian
+    then Array.Reverse(bytes)
+    BitConverter.ToDouble(bytes)
+    
+
+let deserializeFloat (stream: Stream) =
+    let mutable bytes = Array.create sizeof<'float32> 0uy
+    if stream.Read(bytes) < bytes.Length then invalidOp "Unexpected end of file"
+
+    if not BitConverter.IsLittleEndian
+    then Array.Reverse(bytes)
+    BitConverter.ToSingle(bytes)
+    
+    
+let deserializeFixed32 (stream: Stream) =
+    let mutable bytes = Array.create sizeof<'uint32> 0uy
+    if stream.Read(bytes) < bytes.Length then invalidOp "Unexpected end of file"
+
+    if not BitConverter.IsLittleEndian
+    then Array.Reverse(bytes)
+    BitConverter.ToUInt32(bytes)
+    
+    
+let deserializeFixed64 (stream: Stream) =
+    let mutable bytes = Array.create sizeof<'uint64> 0uy
+    if stream.Read(bytes) < bytes.Length then invalidOp "Unexpected end of file"
+
+    if not BitConverter.IsLittleEndian
+    then Array.Reverse(bytes)
+    BitConverter.ToUInt64(bytes)
+    
+    
+let deserializeString stream =
+    let length = int32 (deserializeVarint stream)
+    let bytes = Array.create length 0uy
+    if stream.Read(bytes) < bytes.Length then invalidOp "Unexpected end of file"
+
+    Encoding.UTF8.GetString(bytes)

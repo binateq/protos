@@ -91,6 +91,15 @@ module ``serializeString should`` =
             
         Assert.Equal<byte array>(expected, stream.ToArray())
 
+    [<Fact>]
+    let ``store 0x07 0x74 0x65 0x73 0x74 0x69 0x6e 0x67 for "😂"`` () =
+        use stream = new MemoryStream()
+        serializeString "😂" stream
+        
+        let expected = [| 0x04uy; 0xf0uy; 0x9fuy; 0x98uy; 0x82uy |]
+            
+        Assert.Equal<byte array>(expected, stream.ToArray())
+
 
 module ``serializeScalarValue should`` =
     [<Fact>]
@@ -181,3 +190,97 @@ module ``serializeMessage should`` =
                           0xd2uy; 0x6auy; 0x50uy; 0x3euy; 0x40uy |]
         
         Assert.Equal<byte array>(expected, stream.ToArray())
+
+
+module ``deserializeVarint should`` =
+    [<Fact>]
+    let ``restore 80 for 0x50`` () =
+        let bytes = [| 0x50uy |]
+        use stream = new MemoryStream(bytes)
+        Assert.Equal(80uL, deserializeVarint stream)
+        Assert.Equal(bytes.LongLength, stream.Position)
+
+
+    [<Fact>]
+    let ``restore 150 for 0x96 0x01`` () =
+        let bytes = [| 0x96uy; 0x01uy |]
+        use stream = new MemoryStream(bytes)
+        Assert.Equal(150uL, deserializeVarint stream)
+        Assert.Equal(bytes.LongLength, stream.Position)
+
+
+    [<Fact>]
+    let ``restore -2 for 0xfe 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0x01`` () =
+        let bytes =
+            [| 0xfeuy; 0xffuy; 0xffuy; 0xffuy; 0xffuy
+               0xffuy; 0xffuy; 0xffuy; 0xffuy; 0x01uy |]
+        use stream = new MemoryStream(bytes)
+        Assert.Equal(-2L, int64 (deserializeVarint stream))
+        Assert.Equal(bytes.LongLength, stream.Position)
+
+
+module ``deserializeTag should`` =
+    [<Fact>]
+    let ``restore field number 1 and wire type Varint for 0x08`` () =
+        let bytes = [| 0x08uy |]
+        use stream = new MemoryStream(bytes)
+        
+        Assert.Equal((1u, WireType.Varint), deserializeTag stream)
+        Assert.Equal(bytes.LongLength, stream.Position)
+
+    [<Fact>]
+    let ``restore field number 3 and wire type I32 for 0x1d`` () =
+        let bytes = [| 0x1duy |]
+        use stream = new MemoryStream(bytes)
+        
+        Assert.Equal((3u, WireType.I32), deserializeTag stream)
+        Assert.Equal(bytes.LongLength, stream.Position)
+
+
+module ``deserializeSInt32 should`` =
+    [<Fact>]
+    let ``restore -1 for 0x01`` () =
+        let bytes = [| 0x01uy |]
+        use stream = new MemoryStream(bytes)
+        
+        Assert.Equal(-1, deserializeSInt32 stream)
+        Assert.Equal(bytes.LongLength, stream.Position)
+
+    [<Fact>]
+    let ``restore 1 for 0x02`` () =
+        let bytes = [| 0x02uy |]
+        use stream = new MemoryStream(bytes)
+        
+        Assert.Equal(1, deserializeSInt32 stream)
+        Assert.Equal(bytes.LongLength, stream.Position)
+
+
+module ``deserializeDouble should`` =
+    [<Fact>]
+    let ``restore 3.14159265359 for 0x400921FB54442EEA`` () =
+        // little endian bytes are reversed
+        let bytes =
+            [| 0xeauy; 0x2euy; 0x44uy; 0x54uy
+               0xfbuy; 0x21uy; 0x09uy; 0x40uy |]
+        use stream = new MemoryStream(bytes)
+
+        Assert.Equal(3.14159265359, deserializeDouble stream)
+        Assert.Equal(bytes.LongLength, stream.Position)
+
+
+module ``deserializeString should`` =
+    [<Fact>]
+    let ``restore "testing" for 0x07 0x74 0x65 0x73 0x74 0x69 0x6e 0x67`` () =
+        let bytes = [| 0x07uy; 't'B; 'e'B; 's'B; 't'B; 'i'B; 'n'B; 'g'B |]
+        use stream = new MemoryStream(bytes)
+
+        Assert.Equal("testing", deserializeString stream)
+        Assert.Equal(bytes.LongLength, stream.Position)
+
+    [<Fact>]
+    let ``restore "😂" for 0x07 0x74 0x65 0x73 0x74 0x69 0x6e 0x67`` () =
+        let bytes = [| 0x04uy; 0xf0uy; 0x9fuy; 0x98uy; 0x82uy |]
+        use stream = new MemoryStream(bytes)
+
+        Assert.Equal("😂", deserializeString stream)
+        Assert.Equal(bytes.LongLength, stream.Position)

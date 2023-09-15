@@ -121,7 +121,7 @@ let ``"(foo.bar).baz.qux" is valid option name`` () =
 
 
 [<Fact>]
-let ``"option foo = 'aaa';" is String Proto.Option``() =
+let ``"option foo = 'aaa';" is String Proto.Option`` () =
     let expected = {
         Option.name = SimpleName "foo"
         value = Constant.String "aaa"
