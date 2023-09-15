@@ -17,8 +17,7 @@ type ScalarValue =
     | Float of double
     | Identifier of string
     | SignedIdentifier of string
-    | SignedInteger of int64
-    | UnsignedInteger of uint64
+    | Integer of int64
 
 
 type ScalarFieldValue =

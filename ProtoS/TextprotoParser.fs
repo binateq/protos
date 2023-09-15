@@ -100,10 +100,10 @@ let scalarValue =
         attempt (skipCharSpaces '-' >>. floatLiteral) |>> (((+) "-") >> float >> ScalarValue.Float)
         identifier |>> ScalarValue.Identifier
         attempt (skipCharSpaces '-' >>. identifier) |>> ScalarValue.SignedIdentifier
-        attempt (skipCharSpaces '-' >>. decimalLiteral) |>> (int64 >> (~-)) |>> ScalarValue.SignedInteger
+        attempt (skipCharSpaces '-' >>. decimalLiteral) |>> (int64 >> (~-)) |>> ScalarValue.Integer
         // attempt (pchar '-' >>. skipSpaces >>. octalInteger) |>> ((~-) >> ScalarValue.OctSignedInteger)
         // attempt (pchar '-' >>. skipSpaces >>. hexadecimalInteger) |>> ((~-) >> ScalarValue.HexSignedInteger)
-        attempt decimalLiteral |>> uint64 |>> ScalarValue.UnsignedInteger
+        attempt decimalLiteral |>> int64 |>> ScalarValue.Integer
         // attempt octalInteger |>> (uint64 >> ScalarValue.OctUnsignedInteger)
         // hexadecimalInteger |>> (uint64 >> ScalarValue.HexUnsignedInteger)
       ] .>> skipSpaces

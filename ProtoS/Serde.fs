@@ -120,38 +120,18 @@ let serializeScalarValue (messageField: Proto3.MessageField) (value: ScalarValue
         serializeDouble value stream
     | MessageFieldType.Float, Float value ->
         serializeFloat (float32 value) stream
-    | Int32, SignedInteger value ->
+    | Int32, Integer value ->
         serializeVarint (uint64 value) stream
-    | Int64, SignedInteger value ->
+    | Int64, Integer value ->
         serializeVarint (uint64 value) stream
-    | Int32, UnsignedInteger value ->
-        serializeVarint value stream
-    | Int64, UnsignedInteger value ->
-        serializeVarint value stream
-    | UInt32, UnsignedInteger value ->
-        serializeVarint value stream
-    | UInt64, UnsignedInteger value ->
-        serializeVarint value stream
-    | SInt32, SignedInteger value ->
+    | SInt32, Integer value ->
         serializeSInt32 (int32 value) stream
-    | SInt64, SignedInteger value ->
+    | SInt64, Integer value ->
         serializeSInt64 value stream
-    | SInt32, UnsignedInteger value ->
-        serializeSInt32 (int32 value) stream
-    | SInt64, UnsignedInteger value ->
-        serializeSInt64 (int64 value) stream
-    | Fixed32, UnsignedInteger value ->
+    | SFixed32, Integer value ->
         serializeFixed32 (uint32 value) stream
-    | Fixed64, UnsignedInteger value ->
-        serializeFixed64 value stream
-    | SFixed32, SignedInteger value ->
-        serializeFixed32 (uint32 value) stream
-    | SFixed64, SignedInteger value ->
+    | SFixed64, Integer value ->
         serializeFixed64 (uint64 value) stream
-    | SFixed32, UnsignedInteger value ->
-        serializeFixed32 (uint32 value) stream
-    | SFixed64, UnsignedInteger value ->
-        serializeFixed64 value stream
     | Bool, Identifier "true" ->
         serializeBool true stream
     | Bool, Identifier "false" ->
@@ -279,3 +259,34 @@ let deserializeString stream =
     if stream.Read(bytes) < bytes.Length then invalidOp "Unexpected end of file"
 
     Encoding.UTF8.GetString(bytes)
+
+
+let deserializeScalarValue (descriptors: Map<uint32, Proto3.MessageField>) (stream: Stream) =
+    let fieldNumber, wireType = deserializeTag stream
+    match descriptors[fieldNumber].fieldType, wireType with
+    | Double, WireType.I64 ->
+        deserializeDouble stream |> Float
+    | MessageFieldType.Float, WireType.I32 ->
+        deserializeFloat stream |> float |> Float
+    | Int32, WireType.Varint ->
+        deserializeVarint stream |> int64 |> Integer
+    | Int64, WireType.Varint ->
+        deserializeVarint stream |> int64 |> Integer
+    | SInt32, WireType.Varint ->
+        deserializeSInt32 stream |> int64 |> Integer
+    | SInt64, WireType.Varint ->
+        deserializeSInt64 stream |> Integer
+    | SFixed32, WireType.I32 ->
+        deserializeFixed32 stream |> int64 |> Integer
+    | SFixed64, WireType.I64 ->
+        deserializeFixed64 stream |> int64 |> Integer
+    | Bool, WireType.Varint ->
+        if deserializeBool stream then Identifier "true" else Identifier "false" 
+    | MessageFieldType.String, WireType.Len ->
+        deserializeString stream |> String
+    | Bytes, _ ->
+        invalidOp "Bytes can't be serialized as scalar value"
+    | Reference _, _ ->
+        invalidOp "Message can't be serialized as scalar value"
+    | _, _ ->
+        invalidOp "Type of field is not compatible with type of data"

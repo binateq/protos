@@ -107,11 +107,11 @@ module ``serializeScalarValue should`` =
         use stream = new MemoryStream()
         let descriptor =
             { Proto3.MessageField.modifier = None
-              Proto3.MessageField.name = Proto3.MessageFieldName "foo"
-              Proto3.MessageField.fieldType = Proto3.MessageFieldType.Int32
-              Proto3.MessageField.number = Proto3.MessageFieldNumber 1u
+              Proto3.MessageField.name = MessageFieldName "foo"
+              Proto3.MessageField.fieldType = MessageFieldType.Int32
+              Proto3.MessageField.number = MessageFieldNumber 1u
               Proto3.MessageField.options = None }
-        serializeScalarValue descriptor (Textproto.UnsignedInteger 150uL) stream
+        serializeScalarValue descriptor (Integer 150L) stream
         
         Assert.Equal<byte array>([| 0x08uy; 0x96uy; 0x01uy |], stream.ToArray())
         
