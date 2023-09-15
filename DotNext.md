@@ -319,17 +319,17 @@ let import =
 ### Proto3ParserTests.fs
 ```fsharp
 [<Fact>]
-let ``"import weak 'path'; is WeakImport`` () =
+let ``"import weak 'path';" is WeakImport`` () =
     Assert.ParseEqual("import weak 'path';", import, WeakImport "path")
 
 
 [<Fact>]
-let ``"import public 'path'; is PublicImport`` () =
+let ``"import public 'path';" is PublicImport`` () =
     Assert.ParseEqual("import public 'path';", import, PublicImport "path")
 
 
 [<Fact>]
-let ``"import 'path'; is Import`` () =
+let ``"import 'path';" is Import`` () =
     Assert.ParseEqual("import 'path';", import, Import "path")
 ```
 
