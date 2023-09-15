@@ -38,6 +38,7 @@ let fullIdentifier = stringsSepBy1 identifier (pstring ".") .>> skipSpaces
 let decimalLiteral =
     (many1Chars2 (anyOf "123456789") digit) <|> pstring "0"
 
+
 let floatLiteral =
     let e = pstringCI "E"
     let point = pstring "."
@@ -62,34 +63,35 @@ let octalLiteral: Parser<string, unit> = pchar '0' >>. (many1Chars octal)
 let hexadecimalInteger: Parser<string, unit> = pstringCI "0X" >>. (many1Chars hex)
 
 
-let charFromHex s = System.Convert.ToChar(System.Convert.ToInt32(s, 16))
-let charFromOct s = System.Convert.ToChar(System.Convert.ToInt32(s, 8))
-
-let stringLiteral =
+let stringLiteral: Parser<string, unit> =
+    let charFromHex s = System.Convert.ToChar(System.Convert.ToInt32(s, 16)).ToString()
+    let charFromOct s = System.Convert.ToChar(System.Convert.ToInt32(s, 8)).ToString()
+    let charFromLargeHex s = System.Char.ConvertFromUtf32(System.Convert.ToInt32(s, 16))
+    let charToString c = c.ToString()
     let escape =
         choice
-          [ stringReturn "\\a" '\a'
-            stringReturn "\\b" '\b'
-            stringReturn "\\f" '\f'
-            stringReturn "\\n" '\n'
-            stringReturn "\\r" '\r'
-            stringReturn "\\t" '\t'
-            stringReturn "\\v" '\v'
-            stringReturn "\\?" '?'
-            stringReturn "\\\\" '\\'
-            stringReturn "\\\'" '\''
-            stringReturn "\\\"" '\"'
+          [ stringReturn "\\a" "\a"
+            stringReturn "\\b" "\b"
+            stringReturn "\\f" "\f"
+            stringReturn "\\n" "\n"
+            stringReturn "\\r" "\r"
+            stringReturn "\\t" "\t"
+            stringReturn "\\v" "\v"
+            stringReturn "\\?" "?"
+            stringReturn "\\\\" "\\"
+            stringReturn "\\\'" "\'"
+            stringReturn "\\\"" "\""
             pstring "\\x" >>. manyMinMaxSatisfy 1 2 isHex |>> charFromHex
             pstring "\\u" >>. manyMinMaxSatisfy 4 4 isHex |>> charFromHex
-            // pstring "\\U000" >>. manyMinMaxSatisfy 5 5 isHex |>> (fromHex >> Convert.ToChar)
-            // pstring "\\U0010" >>. manyMinMaxSatisfy 4 3 isHex |>> (fromHex >> ((+) 0x100_000L) >> Convert.ToChar) 
+            pstring "\\U000" >>. manyMinMaxSatisfy 5 5 isHex |>> charFromLargeHex
+            pstring "\\U0010" >>. manyMinMaxSatisfy 4 3 isHex |>> charFromLargeHex 
             pstring "\\" >>. manyMinMaxSatisfy 1 3 isOctal |>> charFromOct ]
 
-    let singleQuoteChar = noneOf "\0\'\n\\" <|> escape
-    let doubleQuoteChar = noneOf "\0\"\n\\" <|> escape
+    let singleQuoteChar = (noneOf "\0\'\n\\" |>> charToString) <|> escape
+    let doubleQuoteChar = (noneOf "\0\"\n\\" |>> charToString) <|> escape
 
-    (between (skipChar '\'') (skipChar '\'') (manyChars singleQuoteChar)) <|>
-    (between (skipChar '\"') (skipChar '\"') (manyChars doubleQuoteChar))
+    (between (skipChar '\'') (skipChar '\'') (manyStrings singleQuoteChar)) <|>
+    (between (skipChar '\"') (skipChar '\"') (manyStrings doubleQuoteChar))
 
 
 let stringValue = many1Strings (stringLiteral .>> skipSpaces)
@@ -103,11 +105,11 @@ let scalarValue =
         identifier |>> ScalarValue.Identifier
         attempt (skipCharSpaces '-' >>. identifier) |>> ScalarValue.SignedIdentifier
         attempt (skipCharSpaces '-' >>. decimalLiteral) |>> (int64 >> (~-)) |>> ScalarValue.SignedInteger
-        //attempt (pchar '-' >>. skipSpaces >>. octalInteger) |>> ((~-) >> ScalarValue.OctSignedInteger)
-        //attempt (pchar '-' >>. skipSpaces >>. hexadecimalInteger) |>> ((~-) >> ScalarValue.HexSignedInteger)
+        // attempt (pchar '-' >>. skipSpaces >>. octalInteger) |>> ((~-) >> ScalarValue.OctSignedInteger)
+        // attempt (pchar '-' >>. skipSpaces >>. hexadecimalInteger) |>> ((~-) >> ScalarValue.HexSignedInteger)
         attempt decimalLiteral |>> uint64 |>> ScalarValue.UnsignedInteger
-        //attempt octalInteger |>> (uint64 >> ScalarValue.OctUnsignedInteger)
-        //hexadecimalInteger |>> (uint64 >> ScalarValue.HexUnsignedInteger)
+        // attempt octalInteger |>> (uint64 >> ScalarValue.OctUnsignedInteger)
+        // hexadecimalInteger |>> (uint64 >> ScalarValue.HexUnsignedInteger)
       ] .>> skipSpaces
 
 
@@ -159,3 +161,4 @@ do implementation.Value <- many field |>> Message
 
 
 let textproto = skipSpaces >>. message
+
