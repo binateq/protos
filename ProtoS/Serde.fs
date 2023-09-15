@@ -12,8 +12,8 @@ type WireType =
     | Varint = 0u
     | I64 = 1u
     | Len = 2u
-    | SGroup = 3u
-    | EGroup = 4u
+    | [<Obsolete>] SGroup = 3u
+    | [<Obsolete>] EGroup = 4u
     | I32 = 5u
 
 
