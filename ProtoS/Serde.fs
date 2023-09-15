@@ -167,7 +167,7 @@ let serializeScalarValue (messageField: Proto3.MessageField) (value: ScalarValue
 
         
 let rec serializeMessage (messageName: string) (fields: Field list) (schema: Schema) (stream: Stream) =
-    let descriptors = schema.messages[messageName] 
+    let descriptors = schema.namedMessages[messageName] 
     match fields with
     | ScalarField field::tailFields ->
         let descriptor = descriptors[field.name.asString]

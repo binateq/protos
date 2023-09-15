@@ -114,51 +114,84 @@ module ``serializeScalarValue should`` =
         serializeScalarValue descriptor (Textproto.UnsignedInteger 150uL) stream
         
         Assert.Equal<byte array>([| 0x08uy; 0x96uy; 0x01uy |], stream.ToArray())
+        
+        
+let schema =
+    let namedMessages =
+        Map
+            [ "DistanceRequest", Map
+                [ "from",   { modifier = None
+                              name = MessageFieldName "from"
+                              fieldType = MessageFieldType.Reference "Point"
+                              number = MessageFieldNumber 1u
+                              options = None }
+                  "to",     { modifier = None
+                              name = MessageFieldName "to"
+                              fieldType = MessageFieldType.Reference "Point"
+                              number = MessageFieldNumber 2u
+                              options = None }
+                  "method", { modifier = Some Optional
+                              name = MessageFieldName "method"
+                              fieldType = Reference "CalculationMethod"
+                              number = MessageFieldNumber 3u
+                              options = None } ]
+              "Point", Map
+                  [  "latitude",  { modifier = None
+                                    name = MessageFieldName "latitude"
+                                    fieldType = Double
+                                    number = MessageFieldNumber 1u
+                                    options = None }
+                     "longitude", { modifier = None
+                                    name = MessageFieldName "longitude"
+                                    fieldType = Double
+                                    number = MessageFieldNumber 2u
+                                    options = None } ] ]
+            
+    let numberedMessages =
+        Map
+            [ "DistanceRequest", Map
+                [ 1u,       { modifier = None
+                              name = MessageFieldName "from"
+                              fieldType = MessageFieldType.Reference "Point"
+                              number = MessageFieldNumber 1u
+                              options = None }
+                  2u,       { modifier = None
+                              name = MessageFieldName "to"
+                              fieldType = MessageFieldType.Reference "Point"
+                              number = MessageFieldNumber 2u
+                              options = None }
+                  3u,       { modifier = Some Optional
+                              name = MessageFieldName "method"
+                              fieldType = Reference "CalculationMethod"
+                              number = MessageFieldNumber 3u
+                              options = None } ]
+              "Point", Map
+                  [  1u,          { modifier = None
+                                    name = MessageFieldName "latitude"
+                                    fieldType = Double
+                                    number = MessageFieldNumber 1u
+                                    options = None }
+                     2u,          { modifier = None
+                                    name = MessageFieldName "longitude"
+                                    fieldType = Double
+                                    number = MessageFieldNumber 2u
+                                    options = None } ] ]
+
+    let enums =
+        Map
+            [ "CalculationMethod", Map
+                [ "COSINE", 0
+                  "HAVERSINE", 1 ] ]
+    
+    { namedMessages = namedMessages
+      numberedMessages = numberedMessages 
+      enums = enums }
 
         
 module ``serializeMessage should`` =
     [<Fact>]
     [<Trait("Category", "Integration")>]
     let ``store sample message correctly`` () =
-        let messages =
-            Map
-                [ "DistanceRequest", Map
-                    [ "from",   { modifier = None
-                                  name = MessageFieldName "from"
-                                  fieldType = MessageFieldType.Reference "Point"
-                                  number = MessageFieldNumber 1u
-                                  options = None }
-                      "to",     { modifier = None
-                                  name = MessageFieldName "to"
-                                  fieldType = MessageFieldType.Reference "Point"
-                                  number = MessageFieldNumber 2u
-                                  options = None }
-                      "method", { modifier = Some Optional
-                                  name = MessageFieldName "method"
-                                  fieldType = Reference "CalculationMethod"
-                                  number = MessageFieldNumber 3u
-                                  options = None } ]
-                  "Point", Map
-                      [  "latitude",  { modifier = None
-                                        name = MessageFieldName "latitude"
-                                        fieldType = Double
-                                        number = MessageFieldNumber 1u
-                                        options = None }
-                         "longitude", { modifier = None
-                                        name = MessageFieldName "longitude"
-                                        fieldType = Double
-                                        number = MessageFieldNumber 2u
-                                        options = None } ] ]
-                
-        let enums =
-            Map
-                [ "CalculationMethod", Map
-                    [ "COSINE", 0
-                      "HAVERSINE", 1 ] ]
-        let schema =
-            { messages = messages
-              enums = enums }
-            
         let fromCoordinates =
             [ ScalarField { ScalarField.name = Textproto.Identifier "latitude"
                             value = ScalarFieldValue.ScalarValue (Float 55.75124) }

@@ -4,7 +4,7 @@ open Xunit
 open Proto3
 open SchemaBuilder
 
-module ``buildMessage should`` =
+module ``buildNamedMessage should`` =
     [<Fact>]
     let ``skip all items except MessageField`` () =
         let message =
@@ -55,7 +55,63 @@ module ``buildMessage should`` =
                   number = MessageFieldNumber 4u
                   options = None } ] )
               
-        let actual = buildMessage message      
+        let actual = buildNamedMessage message      
+        
+        Assert.Equal(expected, actual)
+
+
+module ``buildNumberedMessage should`` =
+    [<Fact>]
+    let ``skip all items except MessageField`` () =
+        let message =
+          { Message.name = MessageName "foo"
+            items =
+              [ MessageField
+                  { modifier = None
+                    fieldType = Int32 
+                    name = MessageFieldName "bar"
+                    number = MessageFieldNumber 4u
+                    options = None }
+                MessageEmptyItem
+                MessageOption
+                  { name = SimpleName "baz"
+                    value = Integer 0 }
+                MessageField
+                  { modifier = None
+                    fieldType = Float
+                    name = MessageFieldName "qux"
+                    number = MessageFieldNumber 2u
+                    options = None }
+                MessageField
+                  { modifier = None
+                    fieldType = String 
+                    name = MessageFieldName "quxx"
+                    number = MessageFieldNumber 1u
+                    options = None } ] }
+          
+        let expected =
+          ( "foo",
+            Map
+              [ 1u,
+                { modifier = None
+                  fieldType = String 
+                  name = MessageFieldName "quxx"
+                  number = MessageFieldNumber 1u
+                  options = None }
+                2u,
+                { modifier = None
+                  fieldType = Float 
+                  name = MessageFieldName "qux"
+                  number = MessageFieldNumber 2u
+                  options = None }
+                4u,
+                { modifier = None
+                  fieldType = Int32 
+                  name = MessageFieldName "bar"
+                  number = MessageFieldNumber 4u
+                  options = None } ] )
+              
+        let actual = buildNumberedMessage message      
         
         Assert.Equal(expected, actual)
 

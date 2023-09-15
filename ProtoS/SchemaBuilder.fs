@@ -2,12 +2,28 @@
 
 open Proto3
 
-let buildMessage (message: Message) =
+let buildNamedMessage (message: Message) =
     let (MessageName name) = message.name
     let chooser = function
         | MessageField field ->
             let (MessageFieldName name) = field.name
             Some (name, field)
+        | _ -> None
+    
+    let fields =
+        message.items
+        |> List.choose chooser
+        |> Map
+        
+    (name, fields)
+
+
+let buildNumberedMessage (message: Message) =
+    let (MessageName name) = message.name
+    let chooser = function
+        | MessageField field ->
+            let (MessageFieldNumber number) = field.number
+            Some (number, field)
         | _ -> None
     
     let fields =
@@ -36,7 +52,8 @@ let buildEnum (enum: Enum) =
 
 
 type Schema =
-  { messages: Map<string, Map<string, MessageField>>
+  { namedMessages: Map<string, Map<string, MessageField>>
+    numberedMessages: Map<string, Map<uint32, MessageField>>
     enums: Map<string, Map<string, int32>> }
       
       
@@ -49,10 +66,15 @@ let build (protoItems: ProtoItem list) =
         | ProtoEnum enum -> Some enum
         | _ -> None
     
-    { messages =
+    { namedMessages =
         protoItems
         |> Seq.choose messageChooser
-        |> Seq.map buildMessage
+        |> Seq.map buildNamedMessage
+        |> Map
+      numberedMessages =
+        protoItems
+        |> Seq.choose messageChooser
+        |> Seq.map buildNumberedMessage
         |> Map
       enums =
         protoItems
