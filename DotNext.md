@@ -892,3 +892,10 @@ message File {
    as _third_ and _fourth_ files in the project. Get content from the GitHub.
 2. Append **TextprotoParserTests.fs** to **ProtoS.Tests**
    as _third_ file in the project. Get content from the GitHub.
+
+## 19. Schema
+
+1. Append **SchemaBuilder.fs** to **ProtoS** as *5th* file in the project.
+   Get content from GitHub.
+2. Append **SchemaBuilderTests.fs** to **ProtoS.Tests** as *fourth* file
+   in the project. Get content from the GitHub.
