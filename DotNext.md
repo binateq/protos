@@ -25,7 +25,9 @@ To both **ProtoS** and **ProtoS.Tests**.
 
 ## 4. Add reference
 
-From **ProtoS.Tests** to **ProtoS**. 
+From **ProtoS.Tests** to **ProtoS**.
+
+Slieds about parsers.
 
 ## 5. Assert.fs
 
