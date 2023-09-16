@@ -2,6 +2,7 @@
 
 open System
 open System.IO
+open System.Net
 open System.Text
 open Proto3
 open SchemaBuilder
@@ -147,10 +148,10 @@ let serializeScalarValue (messageField: Proto3.MessageField) (value: ScalarValue
 
         
 let rec serializeMessage (messageName: string) (fields: Field list) (schema: Schema) (stream: Stream) =
-    let descriptors = schema.namedMessages[messageName] 
+    let message = schema.namedMessages[messageName] 
     match fields with
     | ScalarField field::tailFields ->
-        let descriptor = descriptors[field.name.asString]
+        let descriptor = message[field.name.asString]
         match field.value with
         | ScalarValue value ->
             serializeScalarValue descriptor value stream
@@ -159,7 +160,7 @@ let rec serializeMessage (messageName: string) (fields: Field list) (schema: Sch
             
         serializeMessage messageName tailFields schema stream
     | MessageField field::tailFields ->
-        let descriptor = descriptors[field.name.asString]
+        let descriptor = message[field.name.asString]
         let (MessageFieldNumber fieldNumber) = descriptor.number
         match field.value with
         | MessageValue (Message subFields) ->
@@ -218,7 +219,7 @@ let deserializeSInt64 stream =
 
 
 let deserializeDouble (stream: Stream) =
-    let mutable bytes = Array.create sizeof<'float> 0uy
+    let mutable bytes = Array.create sizeof<float> 0uy
     if stream.Read(bytes) < bytes.Length then invalidOp "Unexpected end of file"
 
     if not BitConverter.IsLittleEndian
@@ -227,7 +228,7 @@ let deserializeDouble (stream: Stream) =
     
 
 let deserializeFloat (stream: Stream) =
-    let mutable bytes = Array.create sizeof<'float32> 0uy
+    let mutable bytes = Array.create sizeof<float32> 0uy
     if stream.Read(bytes) < bytes.Length then invalidOp "Unexpected end of file"
 
     if not BitConverter.IsLittleEndian
@@ -236,7 +237,7 @@ let deserializeFloat (stream: Stream) =
     
     
 let deserializeFixed32 (stream: Stream) =
-    let mutable bytes = Array.create sizeof<'uint32> 0uy
+    let mutable bytes = Array.create sizeof<uint32> 0uy
     if stream.Read(bytes) < bytes.Length then invalidOp "Unexpected end of file"
 
     if not BitConverter.IsLittleEndian
@@ -245,7 +246,7 @@ let deserializeFixed32 (stream: Stream) =
     
     
 let deserializeFixed64 (stream: Stream) =
-    let mutable bytes = Array.create sizeof<'uint64> 0uy
+    let mutable bytes = Array.create sizeof<uint64> 0uy
     if stream.Read(bytes) < bytes.Length then invalidOp "Unexpected end of file"
 
     if not BitConverter.IsLittleEndian
@@ -261,13 +262,15 @@ let deserializeString stream =
     Encoding.UTF8.GetString(bytes)
 
 
-let deserializeScalarValue (descriptors: Map<uint32, Proto3.MessageField>) (stream: Stream) =
+let rec deserializeValue (messageName: string) (schema: Schema) (stream: Stream) =
     let fieldNumber, wireType = deserializeTag stream
+    let message = schema.numberedMessages[messageName]
+    let (MessageFieldName fieldName) = message[fieldNumber].name
     let makeField value =
-        let (MessageFieldName name) = descriptors[fieldNumber].name
-        { ScalarField.name = FieldName.Identifier name
-          value = ScalarValue value }
-    match descriptors[fieldNumber].fieldType, wireType with
+        ScalarField { ScalarField.name = FieldName.Identifier fieldName
+                      value = ScalarValue value }
+    
+    match message[fieldNumber].fieldType, wireType with
     | Double, WireType.I64 ->
         deserializeDouble stream |> Float |> makeField
     | MessageFieldType.Float, WireType.I32 ->
@@ -289,8 +292,28 @@ let deserializeScalarValue (descriptors: Map<uint32, Proto3.MessageField>) (stre
     | MessageFieldType.String, WireType.Len ->
         deserializeString stream |> String |> makeField
     | Bytes, _ ->
-        invalidOp "Bytes can't be serialized as scalar value"
-    | Reference _, _ ->
-        invalidOp "Message can't be serialized as scalar value"
+        raise (NotImplementedException("Bytes deserialization is not implemented yet"))
+    | Reference name, WireType.Len ->
+        let length = int32 (deserializeVarint stream)
+        let bytes = Array.create length 0uy
+        if stream.Read(bytes) < bytes.Length then invalidOp "Unexpected end of file"
+        use subStream = new MemoryStream(bytes)
+        let fields = deserializeMessage name schema subStream
+        
+        MessageField { MessageField.name = FieldName.Identifier fieldName
+                       value = MessageValue (Message fields) }
     | _, _ ->
         invalidOp "Type of field is not compatible with type of data"
+and deserializeMessage (messageName: string) (schema: Schema) (stream: Stream) =
+    let eof (stream: Stream) =
+        if stream.ReadByte() = -1
+        then true
+        else
+            stream.Seek(-1L, SeekOrigin.Current) |> ignore
+            false
+            
+    seq {
+        while not (eof stream) do
+            let nextField = deserializeValue messageName schema stream 
+            yield nextField
+    } |> Seq.toList

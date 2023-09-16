@@ -136,16 +136,22 @@ let schema =
                               number = MessageFieldNumber 3u
                               options = None } ]
               "Point", Map
-                  [  "latitude",  { modifier = None
-                                    name = MessageFieldName "latitude"
-                                    fieldType = Double
-                                    number = MessageFieldNumber 1u
-                                    options = None }
-                     "longitude", { modifier = None
-                                    name = MessageFieldName "longitude"
-                                    fieldType = Double
-                                    number = MessageFieldNumber 2u
-                                    options = None } ] ]
+                  [ "latitude",  { modifier = None
+                                   name = MessageFieldName "latitude"
+                                   fieldType = Double
+                                   number = MessageFieldNumber 1u
+                                   options = None }
+                    "longitude", { modifier = None
+                                   name = MessageFieldName "longitude"
+                                   fieldType = Double
+                                   number = MessageFieldNumber 2u
+                                   options = None } ]
+              "DistanceReply", Map
+                  [ "result", { modifier = None
+                                name = MessageFieldName "result"
+                                fieldType = Double
+                                number = MessageFieldNumber 1u
+                                options = None } ] ]
             
     let numberedMessages =
         Map
@@ -175,7 +181,13 @@ let schema =
                                     name = MessageFieldName "longitude"
                                     fieldType = Double
                                     number = MessageFieldNumber 2u
-                                    options = None } ] ]
+                                    options = None } ]
+              "DistanceReply", Map
+                  [  1u, { modifier = None
+                           name = MessageFieldName "result"
+                           fieldType = Double
+                           number = MessageFieldNumber 1u
+                           options = None } ] ]
 
     let enums =
         Map
@@ -187,42 +199,45 @@ let schema =
       numberedMessages = numberedMessages 
       enums = enums }
 
+
+let distanceRequest =
+    let fromPoint =
+        [ ScalarField { ScalarField.name = Textproto.Identifier "latitude"
+                        value = ScalarFieldValue.ScalarValue (Float 55.75124) }
+          ScalarField { ScalarField.name = Textproto.Identifier "longitude"
+                        value = ScalarFieldValue.ScalarValue (Float 37.61842) } ]
+
+    let toPoint =
+        [ ScalarField { ScalarField.name = Textproto.Identifier "latitude"
+                        value = ScalarFieldValue.ScalarValue (Float 59.93863) }
+          ScalarField { ScalarField.name = Textproto.Identifier "longitude"
+                        value = ScalarFieldValue.ScalarValue (Float 30.31413) } ]
+
+    [ MessageField { MessageField.name = Textproto.Identifier "from"
+                     value = MessageFieldValue.MessageValue (Message fromPoint) }
+      MessageField { MessageField.name = Textproto.Identifier "to"
+                     value = MessageFieldValue.MessageValue (Message toPoint) } ]
+
+
+let binaryDistanceRequest =
+    [| 0x0auy; 0x12uy; 0x09uy; 0x39uy; 0xb9uy
+       0xdfuy; 0xa1uy; 0x28uy; 0xe0uy; 0x4buy
+       0x40uy; 0x11uy; 0x9euy; 0x98uy; 0xf5uy
+       0x62uy; 0x28uy; 0xcfuy; 0x42uy; 0x40uy
+       0x12uy; 0x12uy; 0x09uy; 0xb2uy; 0x85uy
+       0x20uy; 0x07uy; 0x25uy; 0xf8uy; 0x4duy
+       0x40uy; 0x11uy; 0x46uy; 0xb1uy; 0xdcuy
+       0xd2uy; 0x6auy; 0x50uy; 0x3euy; 0x40uy |]
+
         
 module ``serializeMessage should`` =
     [<Fact>]
     [<Trait("Category", "Integration")>]
     let ``store sample message correctly`` () =
-        let fromCoordinates =
-            [ ScalarField { ScalarField.name = Textproto.Identifier "latitude"
-                            value = ScalarFieldValue.ScalarValue (Float 55.75124) }
-              ScalarField { ScalarField.name = Textproto.Identifier "longitude"
-                            value = ScalarFieldValue.ScalarValue (Float 37.61842) } ]
-
-        let toCoordinates =
-            [ ScalarField { ScalarField.name = Textproto.Identifier "latitude"
-                            value = ScalarFieldValue.ScalarValue (Float 59.93863) }
-              ScalarField { ScalarField.name = Textproto.Identifier "longitude"
-                            value = ScalarFieldValue.ScalarValue (Float 30.31413) } ]
-            
-        let fields =
-            [ MessageField { MessageField.name = Textproto.Identifier "from"
-                             value = MessageFieldValue.MessageValue (Message fromCoordinates) }
-              MessageField { MessageField.name = Textproto.Identifier "to"
-                             value = MessageFieldValue.MessageValue (Message toCoordinates) } ]
-            
         use stream = new MemoryStream()
-        serializeMessage "DistanceRequest" fields schema stream
+        serializeMessage "DistanceRequest" distanceRequest schema stream
         
-        let expected = [| 0x0auy; 0x12uy; 0x09uy; 0x39uy; 0xb9uy
-                          0xdfuy; 0xa1uy; 0x28uy; 0xe0uy; 0x4buy
-                          0x40uy; 0x11uy; 0x9euy; 0x98uy; 0xf5uy
-                          0x62uy; 0x28uy; 0xcfuy; 0x42uy; 0x40uy
-                          0x12uy; 0x12uy; 0x09uy; 0xb2uy; 0x85uy
-                          0x20uy; 0x07uy; 0x25uy; 0xf8uy; 0x4duy
-                          0x40uy; 0x11uy; 0x46uy; 0xb1uy; 0xdcuy
-                          0xd2uy; 0x6auy; 0x50uy; 0x3euy; 0x40uy |]
-        
-        Assert.Equal<byte array>(expected, stream.ToArray())
+        Assert.Equal<byte array>(binaryDistanceRequest, stream.ToArray())
 
 
 module ``deserializeVarint should`` =
@@ -319,21 +334,26 @@ module ``deserializeString should`` =
         Assert.Equal(bytes.LongLength, stream.Position)
 
 
-module ``deserializeScalarValue should`` =
+module ``deserializeValue should`` =
     [<Fact>]
-    let ``restore "foo" field with Integer value 150 for 0x08 0x96 0x01`` () =
-        let bytes = [| 0x08uy; 0x96uy; 0x01uy |]
+    let ``restore "result" field with Float value 634.6292282187935 for 0x09 0x82 0xeb 0xcd 0xa8 0x08 0xd5 0x83 0x40`` () =
+        let bytes = [| 0x09uy; 0x82uy; 0xebuy; 0xcduy; 0xa8uy; 0x08uy; 0xd5uy; 0x83uy; 0x40uy |]
         use stream = new MemoryStream(bytes)
-        let descriptors = Map [ 1u,
-                                { Proto3.MessageField.modifier = None
-                                  Proto3.MessageField.name = MessageFieldName "foo"
-                                  Proto3.MessageField.fieldType = MessageFieldType.Int32
-                                  Proto3.MessageField.number = MessageFieldNumber 1u
-                                  Proto3.MessageField.options = None } ]
         
         let expected =
-            { ScalarField.name = FieldName.Identifier "foo"
-              value = ScalarValue (Integer 150L) }
+            ScalarField { ScalarField.name = FieldName.Identifier "result"
+                          value = ScalarValue (Float 634.6292282187935) }
         
-        Assert.Equal(expected, deserializeScalarValue descriptors stream)
+        Assert.Equal(expected, deserializeValue "DistanceReply" schema stream)
         Assert.Equal(bytes.LongLength, stream.Position)
+
+
+module ``deserializeMessage should`` =
+    [<Fact>]
+    [<Trait("Category", "Integration")>]
+    let ``restore sample message correctly`` () =
+        use stream = new MemoryStream(binaryDistanceRequest)
+        let actual = deserializeMessage "DistanceRequest" schema stream
+
+        Assert.Equal<Field list>(distanceRequest, actual)
+        Assert.Equal(binaryDistanceRequest.LongLength, stream.Position)
