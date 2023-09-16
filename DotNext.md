@@ -27,7 +27,7 @@ To both **ProtoS** and **ProtoS.Tests**.
 
 From **ProtoS.Tests** to **ProtoS**.
 
-Slieds about parsers.
+Slides about parsers.
 
 ## 5. Assert.fs
 
