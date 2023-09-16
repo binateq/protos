@@ -261,6 +261,8 @@ let ``"syntax = 'proto3'" without semicolon fails`` () =
     Assert.NotParse("syntax = 'proto3'", syntax)
 ```
 
+Return to slide about package.
+
 ## 12. Package
 
 Abstract Syntax Tree. Single case discriminated union.
