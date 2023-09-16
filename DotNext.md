@@ -407,7 +407,7 @@ let options =
 ### Proto3ParserTests.fs
 ```fsharp
 [<Fact>]
-let ``"option foo = 'aaa';" is String Proto.Option``() =
+let ``"option foo = 'aaa';" is String Proto.Option`` () =
     let expected = {
         Option.name = SimpleName "foo"
         value = Constant.String "aaa"
@@ -906,3 +906,77 @@ message File {
    Get content from GitHub.
 2. Append **SerdeTests.fs** to **ProtoS.Tests** as *5th* file
    in the project. Get content from the GitHub.
+
+## 21. Deserialization
+
+Write empty deserialization functions:
+
+```fsharp
+let deserializeVarint (stream: Stream) =
+    0uL
+
+
+let deserializeTag (stream: Stream) =
+    (0u, WireType.Varint)
+
+
+let deserializeBool (stream: Stream) =
+    false
+
+
+let deserializeSInt32 (stream: Stream) =
+    0
+```
+
+Write unit tests (copy, paste, and fix serialization tests):
+
+```fsharp
+module ``deserializeVarint should`` =
+    [<Fact>]
+    let ``restore 80 for 0x50`` () =
+        let bytes = [| 0x50uy |]
+        use stream = new MemoryStream(bytes)
+        Assert.Equal(80uL, deserializeVarint stream)
+        Assert.Equal(bytes.LongLength, stream.Position)
+
+
+    [<Fact>]
+    let ``restore 150 for 0x96 0x01`` () =
+        let bytes = [| 0x96uy; 0x01uy |]
+        use stream = new MemoryStream(bytes)
+        Assert.Equal(150uL, deserializeVarint stream)
+        Assert.Equal(bytes.LongLength, stream.Position)
+
+
+    [<Fact>]
+    let ``restore -2 for 0xfe 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0x01`` () =
+        let bytes =
+            [| 0xfeuy; 0xffuy; 0xffuy; 0xffuy; 0xffuy
+               0xffuy; 0xffuy; 0xffuy; 0xffuy; 0x01uy |]
+        use stream = new MemoryStream(bytes)
+        Assert.Equal(-2L, int64 (deserializeVarint stream))
+        Assert.Equal(bytes.LongLength, stream.Position)
+```
+
+Check that new tests are fail. Fix implementation.
+
+```fsharp
+let deserializeVarint (stream: Stream) =
+    let rec calculateSum shift accumulator =
+        let nextByte = stream.ReadByte()
+        if nextByte = -1 then invalidOp "Unexpected end of file"
+         
+        if nextByte < 128
+        then (uint64 nextByte <<< shift) + accumulator
+        else calculateSum (shift + 7) (uint64 (nextByte - 128) <<< shift) + accumulator
+
+    calculateSum 0 0uL
+```
+
+Now check that all test are successful.
+
+## 22. Deserialization of messages
+
+* `deserializeField`
+* `deserializeMessage`
+* `printFields`
