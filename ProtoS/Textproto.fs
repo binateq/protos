@@ -18,11 +18,31 @@ type ScalarValue =
     | Identifier of string
     | SignedIdentifier of string
     | Integer of int64
+    
+    member this.asString =
+        match this with
+        | String value -> "\"" + value + "\""
+        | Float value -> value.ToString()
+        | Identifier value -> value
+        | SignedIdentifier value -> "-" + value
+        | Integer value -> value.ToString()
 
 
 type ScalarFieldValue =
     | ScalarValue of ScalarValue
     | ScalarList of ScalarValue list
+
+    member this.asString =
+        match this with
+        | ScalarValue value ->
+            value.asString
+        | ScalarList values ->
+            let asText = values
+                      |> List.toSeq
+                      |> Seq.map (fun x -> x.asString)
+                      |> String.concat ", "
+            
+            "[" + asText + "]"
 
 
 type ScalarField =

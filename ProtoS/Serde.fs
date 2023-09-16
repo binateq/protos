@@ -317,3 +317,26 @@ and deserializeMessage (messageName: string) (schema: Schema) (stream: Stream) =
             let nextField = deserializeValue messageName schema stream 
             yield nextField
     } |> Seq.toList
+
+
+let rec printFields (indent: int) (fields: Field list) (writer: TextWriter) =
+    let printMessage (name: string) (fields: Field list) =
+        writer.WriteLine("{0}: {{", name)
+        printFields (indent + 2) fields writer
+        writer.WriteLine("}")
+    
+    match fields with
+    | field::tailFields ->
+        writer.Write(String.replicate indent " ")
+        match field with
+        | ScalarField descriptor ->
+            writer.WriteLine("{0}: {1}", descriptor.name.asString, descriptor.value.asString)
+        | MessageField descriptor ->
+            match descriptor.value with
+            | MessageValue (Message fields) ->
+                printMessage descriptor.name.asString fields
+            | MessageList messages ->
+                for Message fields in messages do
+                    printMessage descriptor.name.asString fields
+        printFields indent tailFields writer
+    | [] -> ()

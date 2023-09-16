@@ -233,7 +233,7 @@ let binaryDistanceRequest =
 module ``serializeMessage should`` =
     [<Fact>]
     [<Trait("Category", "Integration")>]
-    let ``store sample message correctly`` () =
+    let ``store reference message`` () =
         use stream = new MemoryStream()
         serializeMessage "DistanceRequest" distanceRequest schema stream
         
@@ -351,9 +351,29 @@ module ``deserializeValue should`` =
 module ``deserializeMessage should`` =
     [<Fact>]
     [<Trait("Category", "Integration")>]
-    let ``restore sample message correctly`` () =
+    let ``restore reference message`` () =
         use stream = new MemoryStream(binaryDistanceRequest)
         let actual = deserializeMessage "DistanceRequest" schema stream
 
         Assert.Equal<Field list>(distanceRequest, actual)
         Assert.Equal(binaryDistanceRequest.LongLength, stream.Position)
+
+
+module ``printFields should`` =
+    [<Fact>]
+    [<Trait("Category", "Integration")>]
+    let ``print reference fields`` () =
+        use writer = new StringWriter()
+        printFields 0 distanceRequest writer
+        let actual = writer.ToString()
+        let expected = "from: {
+  latitude: 55,75124
+  longitude: 37,61842
+}
+to: {
+  latitude: 59,93863
+  longitude: 30,31413
+}
+"
+
+        Assert.Equal(expected, actual)
