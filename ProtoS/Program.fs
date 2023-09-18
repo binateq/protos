@@ -32,10 +32,24 @@ let main argv =
             printfn $"%s{parser.PrintUsage()}"
             0
         elif arguments.Contains Serialize then
-            printfn "Serialize"
-            0
+            let file, message = arguments.GetResult Serialize
+            let schema = SchemaBuilder.build (Proto3Parser.parse file)
+            use input =
+                match arguments.TryGetResult Input with
+                | Some inputFile -> System.IO.File.OpenRead(inputFile) :> System.IO.Stream
+                | None -> Console.OpenStandardInput() 
+            use output = Console.OpenStandardOutput()
+            let fields = TextprotoParser.parse input
+            
+            Serde.serializeMessage message fields schema output
+            0 
         elif arguments.Contains Deserialize then
-            printfn "Deserialize"
+            let file, message = arguments.GetResult Deserialize
+            let schema = SchemaBuilder.build (Proto3Parser.parse file)
+            use input = Console.OpenStandardInput()
+            let fields = Serde.deserializeMessage message schema input
+            
+            Serde.printFields 2 fields Console.Out
             0
         else
             printfn $"%s{parser.PrintUsage()}"

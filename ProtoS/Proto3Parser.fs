@@ -1,5 +1,6 @@
 module Proto3Parser
 
+open System.Text
 open FParsec
 open Proto3
 
@@ -206,3 +207,9 @@ let protoItem =
 
 
 let proto = spaces >>. syntax >>. (many protoItem)
+
+
+let parse file =
+    match runParserOnFile proto () file Encoding.UTF8 with
+    | Success (result, _, _) -> result
+    | Failure (message, _, _) -> invalidOp message

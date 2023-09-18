@@ -1,5 +1,6 @@
 module TextprotoParser
 
+open System.Text
 open FParsec
 open Textproto
 
@@ -158,3 +159,11 @@ do implementation.Value <- many field |>> Message
 
 let textproto = skipSpaces >>. message
 
+
+let parse stream =
+    match runParserOnStream textproto () "input" stream Encoding.UTF8 with
+    | Success (result, _, _) ->
+        let (Message fields) = result
+        
+        fields
+    | Failure (message, _, _) -> invalidOp message
