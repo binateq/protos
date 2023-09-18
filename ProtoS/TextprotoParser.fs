@@ -157,17 +157,13 @@ let field =
 do implementation.Value <- many field |>> Message
 
 
-let textproto = skipSpaces >>. message
+let textproto = skipSpaces >>. message .>> eof
 
 
 let parse stream =
     match runParserOnStream textproto () "input" stream Encoding.UTF8 with
-    | Success (result, _, position) ->
-        if position.Index < stream.Length
-        then invalidOp $"Unrecognized element in line {position.Line}, column {position.Column}"
-        
+    | Success (result, _, _) ->
         let (Message fields) = result
-        
         fields
     | Failure (_, error, _) ->
         invalidOp (error.ToString())

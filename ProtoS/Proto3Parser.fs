@@ -1,7 +1,6 @@
 module Proto3Parser
 
 open System.Text
-open System.Xml.Serialization
 open FParsec
 open Proto3
 
@@ -19,7 +18,6 @@ let stringLiteral =
     let charFromHex s = System.Convert.ToChar(System.Convert.ToInt32(s, 16)).ToString()
     let charFromOct s = System.Convert.ToChar(System.Convert.ToInt32(s, 8)).ToString()
     let charFromLargeHex s = System.Char.ConvertFromUtf32(System.Convert.ToInt32(s, 16))
-    let charToString c = c.ToString()
     let escape =
         choice
           [ stringReturn "\\a" "\a"
@@ -39,36 +37,45 @@ let stringLiteral =
             pstring "\\U0010" >>. manyMinMaxSatisfy 4 4 isHex |>> ((+) "10") |>> charFromLargeHex 
             pstring "\\" >>. manyMinMaxSatisfy 1 3 isOctal |>> charFromOct ]
 
-    let singleQuoteChar = (noneOf "\0\'\n\\" |>> charToString) <|> escape
-    let doubleQuoteChar = (noneOf "\0\"\n\\" |>> charToString) <|> escape
+    let singleQuoteChar = (noneOf "\0\'\n\\" |>> string) <|> escape
+    let doubleQuoteChar = (noneOf "\0\"\n\\" |>> string) <|> escape
 
     (between (skipChar '\'') (skipChar '\'') (manyStrings singleQuoteChar)) <|>
     (between (skipChar '\"') (skipChar '\"') (manyStrings doubleQuoteChar))
 
 
+let comment: Parser<unit, unit> = skipString "//" .>> skipRestOfLine true
+let blanks = spaces .>> many (comment .>> spaces) |>> ignore 
+let blanks1 = spaces1 .>> many (comment .>> spaces) |>> ignore
+
+let enclosed (brackets: string) parser =
+    between (skipChar brackets.[0] .>> blanks) (skipChar brackets.[1] .>> blanks) parser
+
+
+
 let syntax =
-    skipString "syntax" .>> spaces
-    .>> skipChar '=' .>> spaces
-    .>> (skipString "\"proto3\"" <|> skipString "'proto3'") .>> spaces
-    .>> skipChar ';' .>> spaces
+    skipString "syntax" .>> blanks
+    .>> skipChar '=' .>> blanks
+    .>> (skipString "\"proto3\"" <|> skipString "'proto3'") .>> blanks
+    .>> skipChar ';' .>> blanks
 
 
 let package =
-    skipString "package" >>. spaces >>.
-    fullIdentifier .>> spaces
-    .>> skipChar ';' .>> spaces
+    skipString "package" >>. blanks >>.
+    fullIdentifier .>> blanks
+    .>> skipChar ';' .>> blanks
     |>> Package
 
 
 let import =
    let path =
-       (skipString "weak" >>. spaces1 >>. stringLiteral |>> WeakImport) <|>
-       (skipString "public" >>. spaces1 >>. stringLiteral |>> PublicImport) <|>
+       (skipString "weak" >>. blanks1 >>. stringLiteral |>> WeakImport) <|>
+       (skipString "public" >>. blanks1 >>. stringLiteral |>> PublicImport) <|>
        (stringLiteral |>> Import)
 
-   skipString "import" >>. spaces1
-   >>. path .>> spaces
-   .>> skipChar ';' .>> spaces;
+   skipString "import" >>. blanks1
+   >>. path .>> blanks
+   .>> skipChar ';' .>> blanks;
 
 
 let pnumber : Parser<Constant, unit> =
@@ -96,32 +103,32 @@ let constant =
 let optionName =
     choice
       [ identifier |>> SimpleName
-        between (skipChar '(' .>> spaces) (skipChar ')' .>> spaces) fullIdentifier |>> ComplexName ]
+        between (skipChar '(' .>> blanks) (skipChar ')' .>> blanks) fullIdentifier |>> ComplexName ]
 
 
 let private optionAssignment =
-    optionName .>> spaces
-    .>> skipChar '=' .>> spaces
-    .>>. constant .>> spaces
+    optionName .>> blanks
+    .>> skipChar '=' .>> blanks
+    .>>. constant .>> blanks
     |>> (fun (name, value) -> { name = name; value = value })
 
 
 let option =
-    skipString "option" >>. spaces1
-    >>. optionAssignment .>> spaces
-    .>> skipChar ';' .>> spaces
+    skipString "option" >>. blanks1
+    >>. optionAssignment .>> blanks
+    .>> skipChar ';' .>> blanks
 
 
 let options =
-    let bracketed p = between (skipString "[" .>> spaces) (skipString "]" .>> spaces) p
-    let assignments = sepBy optionAssignment (skipChar ',' .>> spaces) 
+    let bracketed p = between (skipString "[" .>> blanks) (skipString "]" .>> blanks) p
+    let assignments = sepBy optionAssignment (skipChar ',' .>> blanks) 
     opt (bracketed assignments)
 
 
 let enumField =
-    let name = identifier .>> spaces .>> skipString "=" .>> spaces |>> EnumFieldName
-    let value = pint32 .>> spaces |>> EnumValue
-    let options = options .>> spaces .>> skipString ";" .>> spaces 
+    let name = identifier .>> blanks .>> skipString "=" .>> blanks |>> EnumFieldName
+    let value = pint32 .>> blanks |>> EnumValue
+    let options = options .>> blanks .>> skipString ";" .>> blanks 
     
     pipe3 name value options
           (fun name value options -> { name = name; value = value; options = options })
@@ -135,8 +142,8 @@ let enumItem =
 
 
 let enumDefinition =
-    let enclosed p = between (skipChar '{' .>> spaces) (skipChar '}' .>> spaces) p
-    let name = skipString "enum" >>. spaces1 >>. identifier .>> spaces |>> EnumName
+    let enclosed p = between (skipChar '{' .>> blanks) (skipChar '}' .>> blanks) p
+    let name = skipString "enum" >>. blanks1 >>. identifier .>> blanks |>> EnumName
     let items = enclosed (many enumItem)
     
     pipe2 name items (fun name items -> { Enum.name = name; items = items })
@@ -169,11 +176,11 @@ let messageField =
         fieldType = fieldType
         number = number
         options = options }
-    let modifier = opt ((stringReturn "repeated" Repeated <|> stringReturn "optional" Optional) .>> spaces1)
-    let fieldType = fieldType .>> spaces1
-    let fieldName = identifier .>> spaces .>> skipChar '=' .>> spaces |>> MessageFieldName
-    let fieldNumber = puint32 .>> spaces |>> MessageFieldNumber
-    let options = options .>> spaces .>> skipString ";" .>> spaces 
+    let modifier = opt ((stringReturn "repeated" Repeated <|> stringReturn "optional" Optional) .>> blanks1)
+    let fieldType = fieldType .>> blanks1
+    let fieldName = identifier .>> blanks .>> skipChar '=' .>> blanks |>> MessageFieldName
+    let fieldNumber = puint32 .>> blanks |>> MessageFieldNumber
+    let options = options .>> blanks .>> skipString ";" .>> blanks 
 
     pipe5 modifier fieldType fieldName fieldNumber options make
 
@@ -191,8 +198,8 @@ let messageItem =
 
 
 do implementation.Value <-
-    let name = skipString "message" >>. spaces1 >>. identifier .>> spaces |>> MessageName 
-    let items = between (skipChar '{' .>> spaces) (skipChar '}' .>> spaces) (many messageItem)
+    let name = skipString "message" >>. blanks1 >>. identifier .>> blanks |>> MessageName 
+    let items = between (skipChar '{' .>> blanks) (skipChar '}' .>> blanks) (many messageItem)
 
     pipe2 name items (fun name items -> { name = name; items = items })
 
@@ -209,15 +216,15 @@ let rpc =
         input = input
         output = output
         options = options }
-    let enclosed p = between (skipChar '(' .>> spaces) (skipChar ')' .>> spaces) p
-    let enclosedCurly p = between (skipChar '{' .>> spaces) (skipChar '}' .>> spaces) p
-    let name = skipString "rpc" >>. spaces1 >>. identifier .>> spaces |>> RpcName
-    let input = enclosed (rpcType .>> spaces)
-    let output = skipString "returns" >>. spaces >>. (enclosed (rpcType .>> spaces))
+    let enclosed p = between (skipChar '(' .>> blanks) (skipChar ')' .>> blanks) p
+    let enclosedCurly p = between (skipChar '{' .>> blanks) (skipChar '}' .>> blanks) p
+    let name = skipString "rpc" >>. blanks1 >>. identifier .>> blanks |>> RpcName
+    let input = enclosed (rpcType .>> blanks)
+    let output = skipString "returns" >>. blanks >>. (enclosed (rpcType .>> blanks))
     let options =
         choice
-          [ enclosedCurly (sepBy1 optionAssignment (skipChar ',' .>> spaces)) |>> Some
-            stringReturn ";" None .>> spaces ]
+          [ enclosedCurly (sepBy1 optionAssignment (skipChar ',' .>> blanks)) |>> Some
+            stringReturn ";" None .>> blanks ]
     
     pipe4 name input output options make
 
@@ -233,8 +240,8 @@ let serviceDefinition =
     let make name items =
       { name = name
         items = items }
-    let name = skipString "service" >>. spaces1 >>. identifier .>> spaces |>> ServiceName
-    let items = between (skipChar '{' .>> spaces) (skipChar '}' .>> spaces) (many1 serviceItem)
+    let name = skipString "service" >>. blanks1 >>. identifier .>> blanks |>> ServiceName
+    let items = between (skipChar '{' .>> blanks) (skipChar '}' .>> blanks) (many1 serviceItem)
     
     pipe2 name items make
 
@@ -250,15 +257,12 @@ let protoItem =
         serviceDefinition |>> ProtoService ]
 
 
-let proto = spaces >>. syntax >>. (many protoItem)
+let proto = blanks >>. syntax >>. (many protoItem) .>> eof
 
 
 let parse file =
     match runParserOnFile proto () file Encoding.UTF8 with
-    | Success (result, _, position) ->
-        if position.Index < System.IO.FileInfo(file).Length
-        then invalidOp $"Unrecognized element in line {position.Line}, column {position.Column}"
-        
+    | Success (result, _, _) ->
         result
     | Failure (_, error, _) ->
         invalidOp (error.ToString())
