@@ -1,6 +1,7 @@
 module Proto3Parser
 
 open System.Text
+open System.Xml.Serialization
 open FParsec
 open Proto3
 
@@ -196,6 +197,48 @@ do implementation.Value <-
     pipe2 name items (fun name items -> { name = name; items = items })
 
 
+let rpcType =
+    choice
+      [ skipString "stream" >>. fullIdentifier |>> StreamMessageType
+        fullIdentifier |>> MessageType ]
+
+
+let rpc =
+    let make name input output options =
+      { name = name
+        input = input
+        output = output
+        options = options }
+    let enclosed p = between (skipChar '(' .>> spaces) (skipChar ')' .>> spaces) p
+    let enclosedCurly p = between (skipChar '{' .>> spaces) (skipChar '}' .>> spaces) p
+    let name = skipString "rpc" >>. spaces1 >>. identifier .>> spaces |>> RpcName
+    let input = enclosed (rpcType .>> spaces)
+    let output = skipString "returns" >>. spaces >>. (enclosed (rpcType .>> spaces))
+    let options =
+        choice
+          [ enclosedCurly (sepBy1 optionAssignment (skipChar ',' .>> spaces)) |>> Some
+            stringReturn ";" None .>> spaces ]
+    
+    pipe4 name input output options make
+
+
+let serviceItem =
+    choice
+      [ rpc |>> ServiceRpc
+        option |>> ServiceOption
+        stringReturn ";" ServiceEmptyItem ]
+
+
+let serviceDefinition =
+    let make name items =
+      { name = name
+        items = items }
+    let name = skipString "service" >>. spaces1 >>. identifier .>> spaces |>> ServiceName
+    let items = between (skipChar '{' .>> spaces) (skipChar '}' .>> spaces) (many1 serviceItem)
+    
+    pipe2 name items make
+
+
 let protoItem =
     choice
       [ stringReturn ";" ProtoEmptyStatement
@@ -203,7 +246,8 @@ let protoItem =
         package |>> ProtoPackage
         option |>> ProtoOption
         enumDefinition |>> ProtoEnum
-        messageDefinition |>> ProtoMessage ]
+        messageDefinition |>> ProtoMessage
+        serviceDefinition |>> ProtoService ]
 
 
 let proto = spaces >>. syntax >>. (many protoItem)
@@ -211,5 +255,10 @@ let proto = spaces >>. syntax >>. (many protoItem)
 
 let parse file =
     match runParserOnFile proto () file Encoding.UTF8 with
-    | Success (result, _, _) -> result
-    | Failure (message, _, _) -> invalidOp message
+    | Success (result, _, position) ->
+        if position.Index < System.IO.FileInfo(file).Length
+        then invalidOp $"Unrecognized element in line {position.Line}, column {position.Column}"
+        
+        result
+    | Failure (_, error, _) ->
+        invalidOp (error.ToString())

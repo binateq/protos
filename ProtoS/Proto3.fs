@@ -1,5 +1,7 @@
 module Proto3
 
+open System.Security.Authentication.ExtendedProtection
+
 type Package = Package of string
 
 
@@ -95,11 +97,40 @@ and Message =
     items: MessageItem list }
 
 
+type RpcName = RpcName of string
+
+
+type RpcType =
+    | MessageType of string
+    | StreamMessageType of string
+
+
+type Rpc =
+  { name: RpcName
+    input: RpcType
+    output: RpcType
+    options: Option list option }
+
+
+type ServiceItem =
+    | ServiceRpc of Rpc
+    | ServiceOption of Option
+    | ServiceEmptyItem
+
+
+type ServiceName = ServiceName of string
+
+
+type Service =
+  { name: ServiceName
+    items: ServiceItem list }
+
+
 type ProtoItem =
     | ProtoImport of Import
     | ProtoPackage of Package
     | ProtoOption of Option
     | ProtoMessage of Message
     | ProtoEnum of Enum
-    // TODO: ProtoService
+    | ProtoService of Service
     | ProtoEmptyStatement

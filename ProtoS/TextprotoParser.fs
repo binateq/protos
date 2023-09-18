@@ -162,8 +162,12 @@ let textproto = skipSpaces >>. message
 
 let parse stream =
     match runParserOnStream textproto () "input" stream Encoding.UTF8 with
-    | Success (result, _, _) ->
+    | Success (result, _, position) ->
+        if position.Index < stream.Length
+        then invalidOp $"Unrecognized element in line {position.Line}, column {position.Column}"
+        
         let (Message fields) = result
         
         fields
-    | Failure (message, _, _) -> invalidOp message
+    | Failure (_, error, _) ->
+        invalidOp (error.ToString())
