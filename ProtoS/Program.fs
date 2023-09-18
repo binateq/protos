@@ -1,20 +1,45 @@
 ﻿module Program
 
 open System
+open Argu
 
-let println (s: string) = Console.WriteLine(s)
+type Arguments =
+    | [<CliPrefix(CliPrefix.None); AltCommandLine("ser", "s"); First; Unique>]
+      Serialize of file: string * message: string
+    | [<CliPrefix(CliPrefix.None); AltCommandLine("de", "d"); First; Unique>]
+      Deserialize of file: string * message: string
+    | [<AltCommandLine("-i"); Unique>]
+      Input of file: string
+    | [<AltCommandLine("-o"); Unique>]
+      Output of file: string
+    
+    interface IArgParserTemplate with
+        member this.Usage =
+            match this with
+            | Serialize _ -> "serialize <message> using proto v3 from <file>; input is textproto, output is binary"
+            | Deserialize _ -> "deserialize <message> using proto v3 from <file>; input is binary, output is textproto"
+            | Input _ -> "input file; if missed, `stdin` is used"
+            | Output _ -> "output file; if missed, `stdout` is used"
 
 
-println "protos <proto3> <message-name> --bin [--input=<file>] [--output=<file>]"
-println "protos <proto3> <message-name> --text [--input=<file>] [--output=<file>]"
-println "protos [--help]"
-println ""
-println "--bin, -b    -- serialize text input to binary output"
-println "--text, -t d -- deserialize binary input to text output"
-println "<proto3> is the .proto the"
-println "<message-name> is the message name"
-println ""
-println "-i=file, --input=file  -- input <file>, if missed, stdin used"
-println "-o=file, --output=file -- output <file>, if missed, stdout used"
-println ""
-println "-h, --help   -- print this help."
+[<EntryPoint>]
+let main argv =
+    let parser = ArgumentParser.Create<Arguments>(programName = "protos")
+    
+    try
+        let arguments = parser.ParseCommandLine(argv, raiseOnUsage = true)
+        if arguments.IsUsageRequested then
+            printfn $"%s{parser.PrintUsage()}"
+            0
+        elif arguments.Contains Serialize then
+            printfn "Serialize"
+            0
+        elif arguments.Contains Deserialize then
+            printfn "Deserialize"
+            0
+        else
+            printfn $"%s{parser.PrintUsage()}"
+            -1
+    with e ->
+        printfn $"%s{e.Message}"
+        -2
