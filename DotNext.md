@@ -25,7 +25,9 @@ To both **ProtoS** and **ProtoS.Tests**.
 
 ## 4. Add reference
 
-From **ProtoS.Tests** to **ProtoS**. 
+From **ProtoS.Tests** to **ProtoS**.
+
+Slides about parsers.
 
 ## 5. Assert.fs
 
@@ -258,6 +260,8 @@ let ``"syntax = 'proto3';" is Syntax`` () =
 let ``"syntax = 'proto3'" without semicolon fails`` () =
     Assert.NotParse("syntax = 'proto3'", syntax)
 ```
+
+Return to slide about package.
 
 ## 12. Package
 
@@ -889,23 +893,21 @@ message File {
 ## 18. .textproto
 
 1. Append **Textproto.fs** and **TextprotoParser.fs** to **ProtoS**
-   as _third_ and _fourth_ files in the project. Get content from the GitHub.
+   as _third_ and _fourth_ files in the project. Get content from the [GitHub](https://github.com/binateq/protos/releases/tag/dotnext).
 2. Append **TextprotoParserTests.fs** to **ProtoS.Tests**
-   as _third_ file in the project. Get content from the GitHub.
+   as _third_ file in the project.
 
 ## 19. Schema
 
 1. Append **SchemaBuilder.fs** to **ProtoS** as *5th* file in the project.
-   Get content from GitHub.
 2. Append **SchemaBuilderTests.fs** to **ProtoS.Tests** as *fourth* file
-   in the project. Get content from the GitHub.
+   in the project.
 
 ## 20. Serialization
 
 1. Append **Serde.fs** to **ProtoS** as *6th* file in the project.
-   Get content from GitHub.
 2. Append **SerdeTests.fs** to **ProtoS.Tests** as *5th* file
-   in the project. Get content from the GitHub.
+   in the project.
 
 ## 21. Deserialization
 
