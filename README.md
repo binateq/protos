@@ -95,11 +95,23 @@ We'll get binary file **example.bin**. Here is its hexadecimal representation:
 We can send the file to the service.
 
 ```shell
-curl --http0.9 -X POST -H "Content-Type: application/grpc+proto" -d @example.bin http://localhost:5000/Geo/GetDistance --output distance.bin
+curl --http0.9 --http2-prior-knowledge -XPOST -H "Content-Type: application/grpc" -d '@example.bin' http://localhost:5000/geo.Geo/GetDistance --output response.bin
 ```
 
 Here is **response.bin** in hexadecimal representation:
 
 ```text
+0000000000: 09 82 EB CD A8 08 D5 83 | 40
+```
 
+We can deserialize the file to **.textproto** format:
+
+```shell
+proto deserialize example.proto DistanceReply --input response.bin --output response.textproto
+```
+
+The distance equals to:
+
+```text
+result: 634.6292282187935
 ```
