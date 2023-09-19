@@ -22,10 +22,10 @@ type ScalarValue =
     member this.asString =
         match this with
         | String value -> "\"" + value + "\""
-        | Float value -> value.ToString()
+        | Float value -> value.ToString(System.Globalization.CultureInfo.InvariantCulture)
         | Identifier value -> value
         | SignedIdentifier value -> "-" + value
-        | Integer value -> value.ToString()
+        | Integer value -> value.ToString(System.Globalization.CultureInfo.InvariantCulture)
 
 
 type ScalarFieldValue =

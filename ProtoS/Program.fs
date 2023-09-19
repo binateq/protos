@@ -5,19 +5,19 @@ open Argu
 
 type Arguments =
     | [<CliPrefix(CliPrefix.None); AltCommandLine("ser", "s"); First; Unique>]
-      Serialize of file: string * message: string
+      Serialize of proto3File: string * messageName: string
     | [<CliPrefix(CliPrefix.None); AltCommandLine("de", "d"); First; Unique>]
-      Deserialize of file: string * message: string
+      Deserialize of proto3File: string * messageName: string
     | [<AltCommandLine("-i"); Unique>]
-      Input of file: string
+      Input of inputFile: string
     | [<AltCommandLine("-o"); Unique>]
-      Output of file: string
+      Output of outputFile: string
     
     interface IArgParserTemplate with
         member this.Usage =
             match this with
-            | Serialize _ -> "serialize <message> using proto v3 from <file>; input is textproto, output is binary"
-            | Deserialize _ -> "deserialize <message> using proto v3 from <file>; input is binary, output is textproto"
+            | Serialize _ -> "serialize message using .proto v3 file; input is textproto, output is binary"
+            | Deserialize _ -> "deserialize message using .proto v3 file; input is binary, output is textproto"
             | Input _ -> "input file; if missed, `stdin` is used"
             | Output _ -> "output file; if missed, `stdout` is used"
 
@@ -38,7 +38,10 @@ let main argv =
                 match arguments.TryGetResult Input with
                 | Some inputFile -> System.IO.File.OpenRead(inputFile) :> System.IO.Stream
                 | None -> Console.OpenStandardInput() 
-            use output = Console.OpenStandardOutput()
+            use output =
+                match arguments.TryGetResult Output with
+                | Some outputFile -> System.IO.File.Create(outputFile) :> System.IO.Stream
+                | None -> Console.OpenStandardOutput()
             let fields = TextprotoParser.parse input
             
             Serde.serializeMessage message fields schema output
@@ -46,10 +49,17 @@ let main argv =
         elif arguments.Contains Deserialize then
             let file, message = arguments.GetResult Deserialize
             let schema = SchemaBuilder.build (Proto3Parser.parse file)
-            use input = Console.OpenStandardInput()
+            use input =
+                match arguments.TryGetResult Input with
+                | Some inputFile -> System.IO.File.OpenRead(inputFile) :> System.IO.Stream
+                | None -> Console.OpenStandardInput() 
+            use output =
+                match arguments.TryGetResult Output with
+                | Some outputFile -> System.IO.File.CreateText(outputFile) :> System.IO.TextWriter
+                | None -> Console.Out
             let fields = Serde.deserializeMessage message schema input
             
-            Serde.printFields 2 fields Console.Out
+            Serde.printFields 0 fields output
             0
         else
             printfn $"%s{parser.PrintUsage()}"
